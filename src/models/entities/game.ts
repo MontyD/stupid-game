@@ -1,25 +1,24 @@
-import { Entity, Column, ObjectIdColumn, Index, OneToMany } from 'typeorm';
+import { Entity, Column, Index, OneToMany } from 'typeorm';
 import { Player } from './player';
+import { BaseEntity } from './base-entity';
 
 @Entity()
-export class Game {
-
-    @ObjectIdColumn()
-    public readonly id!: string;
-
-    @Column()
-    public name: string;
+export class Game extends BaseEntity {
 
     @Column()
     @Index()
     public code: string;
 
     @OneToMany(() => Player, player => player.game)
-    public players!: Player[];
+    public players?: Player[];
 
-    constructor(name: string, code: string) {
-        this.name = name;
+    constructor(code: string) {
+        super();
         this.code = code;
+    }
+
+    public getPlayers(): Player[] {
+        return this.players ? this.players : [];
     }
 
 }

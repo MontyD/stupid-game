@@ -13,17 +13,14 @@ describe('connection handling', () => {
         socket.disconnect();
     });
 
-    it('will create a game that can be connected to', done => {
-        const startTime = Date.now();
+    it('will create a game', done => {
         socket.on('GAME:CREATED', ({game}: {game: any}) => {
-            expect(game.id).not.toBeUndefined();
             expect(game.code.length).toEqual(5);
-            expect(game.id).not.toBeUndefined();
-            expect(game.name).toEqual('new game');
+            expect(game.id).toBeUndefined();
             done();
         });
         socket.on('ERROR', (failure: any) => expect(failure).toBeNull());
-        socket.emit('CREATE_GAME', {gameName: 'new game'});
-    }, 150);
+        socket.emit('CREATE_GAME');
+    }, 200);
 
 });

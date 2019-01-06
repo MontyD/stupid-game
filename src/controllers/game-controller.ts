@@ -1,27 +1,13 @@
 import { Socket } from 'socket.io';
-import { getManager } from "typeorm";
 import { logger } from '../logger';
-import { TopLevelServerToClientMessages } from '../models/messages/top-level';
-import { Game } from '../models/entities/game';
-import { randomString } from '../utils/random';
 import { GameMessages } from '../models/messages/game';
+import { GameStore } from '../stores/game-store';
 
-const emitError = (socket: Socket, errorMessage: string) => {
-    logger.info(`Handled client error: ${errorMessage}`, socket.id);
-    socket.emit(TopLevelServerToClientMessages.ERROR, {
-        message: errorMessage,
+export const createGame = async (socket: Socket): Promise<void> => {
+    logger.info('creating game for socket', socket.id);
+    const newGame = await GameStore.generateGame();
+    socket.join(newGame.id);
+    socket.emit(GameMessages.CREATED, {
+        game: newGame.toDTO(),
     });
-};
-
-export const createGame = async (socket: Socket, {gameName}: {gameName?: string} = {}): Promise<void> => {
-    logger.debug('creating game', gameName, socket.id);
-
-    if (typeof gameName !== 'string') {
-        emitError(socket, 'must provide game name as a string');
-        return;
-    }
-
-    const game = new Game(gameName, randomString());
-    await getManager().save(game);
-    socket.emit(GameMessages.CREATED, {game});
 };
