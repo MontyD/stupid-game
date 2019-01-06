@@ -13,7 +13,9 @@ export abstract class BaseEntity {
     }
 
     public toDTO(): object {
-        const keys: string[] = Object.keys(this).filter(key => !EXCLUDED_DTO_FIELDS.includes(key));
+        const keys: string[] = Object.keys(this).filter(key =>
+            !EXCLUDED_DTO_FIELDS.includes(key) && typeof (this as ObjectOfAny)[key] !== 'function'
+        );
         return keys.reduce(((accumulator: ObjectOfAny, key: string) => {
             accumulator[key] = this.parsePropertyToDTO((this as ObjectOfAny)[key]);
             return accumulator;
@@ -24,8 +26,8 @@ export abstract class BaseEntity {
         if (Array.isArray(prop)) {
             return prop.map(value => this.parsePropertyToDTO(value));
         }
-        if (prop && typeof prop.toDTO === 'function') {
-            return prop.toDTO();
+        if (prop && typeof prop.toDTO === 'function' && prop.id) {
+            return prop.id;
         }
         return prop;
     }

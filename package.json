@@ -7,8 +7,8 @@
     "lint": "tslint --project tslint.json",
     "lint:fix": "tslint --project tslint.json --fix",
     "watch": "concurrently --kill-others \"npm run watch:ts\" \"npm run watch:serve\"",
-    "watch:serve": "nodemon --watch dist dist/start -e js",
-    "watch:ts": "tsc --watch ",
+    "watch:serve": "nodemon --watch dist dist/start -e js --inspect-brk",
+    "watch:ts": "tsc --watch",
     "test": "npm run test:functional",
     "test:functional": "jest --config=tests/functional/jest.config.js",
     "test:functional:watch": "jest --config=tests/functional/jest.config.js --watchAll"
