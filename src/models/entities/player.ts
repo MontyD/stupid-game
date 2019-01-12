@@ -1,9 +1,9 @@
 import { prop, InstanceType, Typegoose } from 'typegoose';
 import { GameEntity } from './game';
 import { makeDTOParser } from '../../utils/parser';
-import { ObjectId } from 'bson';
+import { ObjectId } from 'mongodb';
 
-const dtoProps: ReadonlyArray<(keyof PlayerType)> = ['name', 'type', 'isHost', 'game'];
+const dtoProps: ReadonlyArray<(keyof PlayerType)> = ['name', 'type', 'isHost', 'game', 'id'];
 
 export enum TypeOfPlayer {
     ACTIVE_PLAYER = 'ACTIVE_PLAYER',

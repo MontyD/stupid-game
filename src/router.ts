@@ -1,8 +1,7 @@
 import { Socket } from 'socket.io';
 import { logger } from './logger';
-import { createGame } from './controllers/game-controller';
+import { createGame, joinGame } from './controllers/game-controller';
 import { TopLevelClientToServerMessages, TopLevelServerToClientMessages } from './models/messages/top-level';
-import { ValidationError } from 'mongoose';
 
 type SocketHandler = (...args: any[]) => void;
 
@@ -11,6 +10,9 @@ export const handle = (socket: Socket): void => {
 
     socket.on(TopLevelClientToServerMessages.CREATE_GAME, handleError(socket, async () => {
         await createGame(socket);
+    }));
+    socket.on(TopLevelClientToServerMessages.JOIN_GAME, handleError(socket, async (...args: any[]) => {
+        await joinGame(socket, ...args);
     }));
 
     socket.on('disconnect', () => {

@@ -19,3 +19,15 @@ export const createGame = async (socket: Socket): Promise<void> => {
         game: gameToDTO(game),
     });
 };
+
+export const joinGame = async (socket: Socket, ...args: any[]) => {
+    const {gameCode, playerName}: {gameCode: string, playerName: string} = args[0] || {};
+    logger.info('joining game', gameCode, playerName, socket.id);
+
+    const game = await GameStore.getGameByCode(gameCode);
+    if (game === null) {
+        throw new Error(`Could not find game with code ${gameCode}`);
+    }
+
+    socket.join(game.id);
+};
