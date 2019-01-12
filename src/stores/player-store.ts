@@ -4,11 +4,11 @@ import { logger } from '../logger';
 
 export class PlayerStore {
 
-    public static generateObserverPlayer(game: GameType): Promise<PlayerType> {
-        logger.debug('Generating observer player for game', game._id);
+    public static generateHostPlayer(game: GameType): Promise<PlayerType> {
+        logger.debug('Generating observer player for game', game.id);
         const newPlayer = {
-            name: 'a',
-            game,
+            name: 'HOST',
+            game: game._id,
             type: TypeOfPlayer.OBSERVER,
             isHost: true,
         };

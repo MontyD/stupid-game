@@ -1,5 +1,9 @@
-import { prop, Ref, InstanceType, Typegoose } from 'typegoose';
+import { prop, InstanceType, Typegoose } from 'typegoose';
 import { GameEntity } from './game';
+import { makeDTOParser } from '../../utils/parser';
+import { ObjectId } from 'bson';
+
+const dtoProps: ReadonlyArray<(keyof PlayerType)> = ['name', 'type', 'isHost', 'game'];
 
 export enum TypeOfPlayer {
     ACTIVE_PLAYER = 'ACTIVE_PLAYER',
@@ -7,7 +11,7 @@ export enum TypeOfPlayer {
 }
 
 export class PlayerEntity extends Typegoose {
-    @prop({ required: true })
+    @prop({ required: true, validate: (val: string) => typeof val === 'string' })
     public name!: string;
 
     @prop({ enum: TypeOfPlayer, required: true, default: TypeOfPlayer.ACTIVE_PLAYER })
@@ -17,8 +21,10 @@ export class PlayerEntity extends Typegoose {
     public isHost!: boolean;
 
     @prop({ ref: GameEntity, required: true })
-    public game!: Ref<GameEntity>;
+    public game!: ObjectId;
 }
 
 export type PlayerType = InstanceType<PlayerEntity>;
-export const Player = new PlayerEntity().getModelForClass(PlayerEntity);
+export const Player = new PlayerEntity().getModelForClass(PlayerEntity, { schemaOptions: { collection: 'Players' } });
+
+export const playerToDTO = makeDTOParser<PlayerType>(dtoProps);
