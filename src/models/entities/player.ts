@@ -1,33 +1,24 @@
-import { Entity, Column, ManyToOne } from 'typeorm';
-import { Game } from './game';
-import { BaseEntity } from './base-entity';
+import { prop, Ref, InstanceType, Typegoose } from 'typegoose';
+import { GameEntity } from './game';
 
-export enum PlayerType {
+export enum TypeOfPlayer {
     ACTIVE_PLAYER = 'ACTIVE_PLAYER',
     OBSERVER = 'OBSERVER',
 }
 
-@Entity()
-export class Player extends BaseEntity {
+export class PlayerEntity extends Typegoose {
+    @prop({ required: true })
+    public name!: string;
 
-    @Column()
-    public name: string;
+    @prop({ enum: TypeOfPlayer, required: true, default: TypeOfPlayer.ACTIVE_PLAYER })
+    public type!: TypeOfPlayer;
 
-    @Column()
-    public type: PlayerType;
+    @prop({ default: false, required: true })
+    public isHost!: boolean;
 
-    @Column()
-    public isHost: boolean;
-
-    @ManyToOne(() => Game, game => game.players)
-    public game: Game;
-
-    constructor(name: string, game: Game, type: PlayerType = PlayerType.ACTIVE_PLAYER, isHost = false) {
-        super();
-        this.name = name;
-        this.game = game;
-        this.type = type;
-        this.isHost = isHost;
-    }
-
+    @prop({ ref: GameEntity, required: true })
+    public game!: Ref<GameEntity>;
 }
+
+export type PlayerType = InstanceType<PlayerEntity>;
+export const Player = new PlayerEntity().getModelForClass(PlayerEntity);

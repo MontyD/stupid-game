@@ -20,6 +20,7 @@ describe('connection handling', () => {
             done();
         });
         socket.on('ERROR', (failure: any) => expect(failure).toBeNull());
+        socket.on('VALIDATION_ERROR', (failure: any) => expect(failure).toBeNull());
         socket.emit('CREATE_GAME');
     }, 200);
 

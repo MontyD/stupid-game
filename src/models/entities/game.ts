@@ -1,6 +1,5 @@
-import { Entity, Column, Index, OneToMany } from 'typeorm';
-import { Player, PlayerType } from './player';
-import { BaseEntity } from './base-entity';
+import { prop, Ref, arrayProp, instanceMethod, InstanceType, Typegoose  } from 'typegoose';
+import { Player, PlayerEntity, PlayerType } from './player';
 
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 10;
@@ -14,47 +13,26 @@ enum GameRunState {
     ABORTED = 'ABORTED',
 }
 
-@Entity()
-export class Game extends BaseEntity {
+export const validateGameCode = (code: string) => Boolean(code && code.length === 5);
 
-    @Column()
-    @Index()
-    public code: string;
+export class GameEntity extends Typegoose {
 
-    @Column()
-    public runState: GameRunState;
+    @prop({ required: true, unique: true, validate: validateGameCode })
+    public code!: string;
 
-    @OneToMany(() => Player, player => player.game)
-    public players?: Player[];
+    @prop({ required: true, default: GameRunState.WAITING_FOR_PLAYERS_TO_JOIN })
+    public runState!: GameRunState;
 
-    constructor(code: string) {
-        super();
-        this.code = code;
-        this.runState = GameRunState.WAITING_FOR_PLAYERS_TO_JOIN;
-    }
+    @arrayProp({ itemsRef: PlayerEntity, default: [] })
+    public players!: Array<Ref<PlayerEntity>>;
 
-    public getActivePlayers(): Player[] {
-        const players = this.players || [];
-        return players.filter(player => player.type === PlayerType.OBSERVER);
-    }
-
-    public getObserverPlayers(): Player[] {
-        const players = this.players || [];
-        return players.filter(player => player.type === PlayerType.OBSERVER);
-    }
-
-    public canStart(): boolean {
-        const {length} = this.getActivePlayers();
-        return length >= MIN_PLAYERS && length <= MAX_PLAYERS;
-    }
-
-    public addPlayer(player: Player): void {
-        const currentPlayers: Player[] = this.players || [];
-        const hasPlayer = currentPlayers.some(existingPlayer => player.equals(existingPlayer));
-        if (!hasPlayer) {
-            currentPlayers.push(player);
-            this.players = currentPlayers;
-        }
+    @instanceMethod
+    public addPlayer(this: InstanceType<GameEntity>, player: PlayerType): Promise<InstanceType<GameEntity>> {
+        this.players.push(player);
+        return this.save();
     }
 
 }
+
+export type GameType = InstanceType<GameEntity>;
+export const Game = new GameEntity().getModelForClass(GameEntity);

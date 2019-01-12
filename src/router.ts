@@ -2,6 +2,7 @@ import { Socket } from 'socket.io';
 import { logger } from './logger';
 import { createGame } from './controllers/game-controller';
 import { TopLevelClientToServerMessages, TopLevelServerToClientMessages } from './models/messages/top-level';
+import { ValidationError } from 'mongoose';
 
 type SocketHandler = (...args: any[]) => void;
 
@@ -22,6 +23,10 @@ export const handleError = (socket: Socket, handler: SocketHandler): SocketHandl
         try {
             await handler(...args);
         } catch (error) {
+            if (error && error.name === 'ValidationError') {
+                 socket.emit(TopLevelServerToClientMessages.VALIDATION_ERROR, error.message);
+                 return;
+            }
             logger.error(
                 'Unhandled error in socket handler',
                 socket.id,

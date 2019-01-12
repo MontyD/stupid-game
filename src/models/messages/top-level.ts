@@ -6,4 +6,5 @@ export enum TopLevelClientToServerMessages {
 
 export enum TopLevelServerToClientMessages {
     ERROR = 'ERROR',
+    VALIDATION_ERROR = 'VALIDATION_ERROR',
 }

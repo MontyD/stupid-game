@@ -9,12 +9,8 @@ export const createGame = async (socket: Socket): Promise<void> => {
     const game = await GameStore.generateGame();
     const hostPlayer = await PlayerStore.generateObserverPlayer(game);
 
-    game.addPlayer(hostPlayer);
-    await GameStore.saveGame(game);
+    await game.addPlayer(hostPlayer);
 
     socket.join(game.id);
-    socket.emit(GameMessages.CREATED, {
-        game: game.toDTO(),
-        hostPlayer: hostPlayer.toDTO(),
-    });
+    socket.emit(GameMessages.CREATED, {});
 };

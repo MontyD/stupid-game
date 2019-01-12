@@ -10,6 +10,7 @@
         "space-before-function-paren": [true, {"anonymous": "always", "named": "never", "asyncArrow": "always"}],
         "interface-name": false,
         "only-arrow-functions": false,
+        "max-classes-per-file": [true, 2],
         "trailing-comma": [
           true,
           {

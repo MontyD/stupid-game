@@ -4,10 +4,11 @@
   "description": "Socket server for stupid game",
   "main": "dist/start.js",
   "scripts": {
+    "build": "tsc",
     "lint": "tslint --project tslint.json",
     "lint:fix": "tslint --project tslint.json --fix",
     "watch": "concurrently --kill-others \"npm run watch:ts\" \"npm run watch:serve\"",
-    "watch:serve": "nodemon --watch dist dist/start -e js --inspect-brk",
+    "watch:serve": "nodemon --inspect --watch dist dist/start -e js",
     "watch:ts": "tsc --watch",
     "test": "npm run test:functional",
     "test:functional": "jest --config=tests/functional/jest.config.js",
@@ -21,6 +22,8 @@
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^23.3.11",
+    "@types/mongodb": "^3.1.18",
+    "@types/mongoose": "5.0.0",
     "@types/pino": "^5.8.3",
     "@types/socket.io": "^2.1.2",
     "@types/socket.io-client": "^1.4.32",
@@ -33,10 +36,11 @@
     "typescript": "^3.2.2"
   },
   "dependencies": {
+    "esm": "^3.0.84",
     "mongodb": "^3.1.10",
+    "mongoose": "5.0.0",
     "pino": "^5.10.6",
-    "reflect-metadata": "^0.1.12",
     "socket.io": "^2.2.0",
-    "typeorm": "^0.2.11"
+    "typegoose": "^5.4.1"
   }
 }
