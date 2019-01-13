@@ -3,7 +3,7 @@ import * as io from 'socket.io';
 import { PORT } from './config/process';
 import { logger } from './logger';
 import { handle } from './router';
-import { initConnection } from './database';
+import * as database from './database';
 
 const createServer = async () => {
     const httpServer = http.createServer((req, res) => {
@@ -16,9 +16,7 @@ const createServer = async () => {
         handle(socket, ioServer);
     });
 
-    logger.info('here');
-
-    await initConnection();
+    await database.initConnection();
 
     httpServer.listen(PORT, () => {
         logger.info(`Successfully listening on port ${PORT}`);

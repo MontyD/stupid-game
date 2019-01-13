@@ -4,13 +4,16 @@ import 'jest';
 describe('connection handling', () => {
 
     let socket: SocketIOClient.Socket;
+    let toDisconnect: SocketIOClient.Socket[] = [];
 
     beforeEach(() => {
         socket = createClientSocket();
+        toDisconnect.push(socket);
     });
 
     afterEach(() => {
-        socket.disconnect();
+        toDisconnect.forEach(io => io.disconnect());
+        toDisconnect = [];
     });
 
     it('will create a game', done => {
@@ -32,6 +35,7 @@ describe('connection handling', () => {
         let firstPlayer: any = null;
         socket.on('GAME:CREATED', ({ game, player }: { game: any, player: any }) => {
             const secondSocket = createClientSocket();
+            toDisconnect.push(secondSocket);
             firstPlayer = player;
             secondSocket.emit('JOIN_GAME', { gameCode: game.code, playerName: 'another player' });
         });

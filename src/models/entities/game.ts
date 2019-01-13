@@ -53,6 +53,12 @@ export class GameEntity extends Typegoose {
         return this.save();
     }
 
+    @instanceMethod
+    public removePlayer(this: InstanceType<GameEntity>, player: PlayerType): Promise<InstanceType<GameEntity>> {
+        this.players = this.players.filter(playerObjectId => !playerObjectId.equals(player._id));
+        return this.save();
+    }
+
 }
 
 export type GameType = InstanceType<GameEntity>;

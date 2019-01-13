@@ -16,9 +16,11 @@ export class PlayerEntity extends Typegoose {
     @staticMethod
     public static generateHostPlayer(
         this: ModelType<PlayerEntity> & typeof PlayerEntity,
-        game: GameType
+        game: GameType,
+        socketId: string
     ): Promise<PlayerType> {
         const newPlayer = {
+            socketId,
             name: 'HOST',
             game: game._id,
             type: TypeOfPlayer.OBSERVER,
@@ -32,13 +34,20 @@ export class PlayerEntity extends Typegoose {
         this: ModelType<PlayerEntity> & typeof PlayerEntity,
         game: GameType,
         name: string,
+        socketId: string,
         observer: boolean = false
     ): Promise<PlayerType> {
         return (new Player({
             name,
+            socketId,
             game: game._id,
             type: observer ? TypeOfPlayer.OBSERVER : TypeOfPlayer.ACTIVE_PLAYER,
         })).save();
+    }
+
+    @staticMethod
+    public static findBySocketId(this: ModelType<PlayerEntity> & typeof PlayerEntity, socketId: string) {
+        return this.findOne({ socketId });
     }
 
     @prop({ required: true, validate: (val: string) => typeof val === 'string' })
@@ -52,6 +61,9 @@ export class PlayerEntity extends Typegoose {
 
     @prop({ ref: GameEntity, required: true })
     public game!: ObjectId;
+
+    @prop({ required: true, unique: true })
+    public socketId!: string;
 
     @instanceMethod
     public toDTO(this: InstanceType<PlayerEntity>): ObjectOfAny {
