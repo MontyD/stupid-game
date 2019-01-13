@@ -1,7 +1,9 @@
-import { prop, arrayProp, instanceMethod, InstanceType, Typegoose  } from 'typegoose';
+import { prop, arrayProp, instanceMethod, staticMethod, InstanceType, Typegoose, ModelType  } from 'typegoose';
 import { PlayerEntity, PlayerType } from './player';
-import { makeDTOParser } from '../../utils/parser';
+import { dtoParser } from '../../utils/parser';
 import { ObjectId } from 'mongodb';
+import { ObjectOfAny } from '../../utils/types';
+import { randomString } from '../../utils/random';
 
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 10;
@@ -21,6 +23,16 @@ export const validateGameCode = (code: string) => Boolean(code && code.length ==
 
 export class GameEntity extends Typegoose {
 
+    @staticMethod
+    public static findByCode(this: ModelType<GameEntity> & typeof GameEntity, code: string) {
+        return this.findOne({ code });
+    }
+
+    @staticMethod
+    public static async generateHost(this: ModelType<GameEntity> & typeof GameEntity): Promise<GameType> {
+        return (new Game({ code: randomString() })).save();
+    }
+
     @prop({ required: true, unique: true, validate: validateGameCode })
     public code!: string;
 
@@ -29,6 +41,11 @@ export class GameEntity extends Typegoose {
 
     @arrayProp({ itemsRef: PlayerEntity, default: [] })
     public players!: ObjectId[];
+
+    @instanceMethod
+    public toDTO(this: InstanceType<GameEntity>): ObjectOfAny {
+        return dtoParser(this, dtoProps);
+    }
 
     @instanceMethod
     public addPlayer(this: InstanceType<GameEntity>, player: PlayerType): Promise<InstanceType<GameEntity>> {
@@ -40,5 +57,3 @@ export class GameEntity extends Typegoose {
 
 export type GameType = InstanceType<GameEntity>;
 export const Game = new GameEntity().getModelForClass(GameEntity, { schemaOptions: { collection: 'Games' } });
-
-export const gameToDTO = makeDTOParser<GameType>(dtoProps);

@@ -17,7 +17,7 @@ export const parseEntityProperty = (prop: ParseableTypes): ReturnTypes => {
         return prop.map(subProp => parseEntityProperty(subProp)) as ReturnSimpleTypes[];
     }
     if (isObjectId(prop)) {
-        return prop.toHexString();
+        return String(prop);
     }
     if (prop && typeof prop === 'object') {
         return prop.id;
@@ -25,7 +25,7 @@ export const parseEntityProperty = (prop: ParseableTypes): ReturnTypes => {
     return prop;
 };
 
-export const makeDTOParser = <Entity>(dtoProps: ReadonlyArray<(keyof Entity)>) => (entity: Entity): ObjectOfAny => {
+export const dtoParser = <Entity>(entity: Entity, dtoProps: ReadonlyArray<(keyof Entity)>): ObjectOfAny => {
     return dtoProps.reduce((accumulator, key) => {
         accumulator[key as string] = parseEntityProperty(entity[key] as any);
         return accumulator;

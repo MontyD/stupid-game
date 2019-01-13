@@ -12,7 +12,9 @@ const createServer = async () => {
     });
     const ioServer = io(httpServer);
 
-    ioServer.on('connection', handle);
+    ioServer.on('connection', (socket: io.Socket) => {
+        handle(socket, ioServer);
+    });
 
     logger.info('here');
 

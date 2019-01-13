@@ -1,33 +1,39 @@
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 import { logger } from '../logger';
 import { GameMessages } from '../models/messages/game';
-import { GameStore } from '../stores/game-store';
-import { PlayerStore } from '../stores/player-store';
-import { playerToDTO } from '../models/entities/player';
-import { gameToDTO } from '../models/entities/game';
+import { Game } from '../models/entities/game';
+import { Player } from '../models/entities/player';
 
-export const createGame = async (socket: Socket): Promise<void> => {
+export const createGame = async (socket: Socket, server: Server): Promise<void> => {
     logger.info('creating game for socket', socket.id);
-    const game = await GameStore.generateGame();
-    const hostPlayer = await PlayerStore.generateHostPlayer(game);
+    const game = await Game.generateHost();
+    const hostPlayer = await Player.generateHostPlayer(game);
 
     await game.addPlayer(hostPlayer);
 
     socket.join(game.id);
-    socket.emit(GameMessages.CREATED, {
-        player: playerToDTO(hostPlayer),
-        game: gameToDTO(game),
+    server.to(game.id).emit(GameMessages.CREATED, {
+        player: hostPlayer.toDTO(),
+        game: game.toDTO(),
     });
 };
 
-export const joinGame = async (socket: Socket, ...args: any[]) => {
-    const {gameCode, playerName}: {gameCode: string, playerName: string} = args[0] || {};
+interface JoinGameArgs { gameCode: string; playerName: string; observer: boolean; }
+export const joinGame = async (socket: Socket, server: Server, ...args: any[]) => {
+    const { gameCode, playerName, observer }: JoinGameArgs = args[0] || {};
     logger.info('joining game', gameCode, playerName, socket.id);
 
-    const game = await GameStore.getGameByCode(gameCode);
+    const game = await Game.findByCode(gameCode);
     if (game === null) {
         throw new Error(`Could not find game with code ${gameCode}`);
     }
 
+    const newPlayer = await Player.generatePlayer(game, playerName, observer);
+    await game.addPlayer(newPlayer);
+
     socket.join(game.id);
+    server.to(game.id).emit(GameMessages.PLAYER_JOINED, {
+        player: newPlayer.toDTO(),
+        game: game.toDTO(),
+    });
 };

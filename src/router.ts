@@ -1,18 +1,18 @@
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 import { logger } from './logger';
 import { createGame, joinGame } from './controllers/game-controller';
 import { TopLevelClientToServerMessages, TopLevelServerToClientMessages } from './models/messages/top-level';
 
 type SocketHandler = (...args: any[]) => void;
 
-export const handle = (socket: Socket): void => {
+export const handle = (socket: Socket, server: Server): void => {
     logger.debug('handling connection with id', socket.id);
 
     socket.on(TopLevelClientToServerMessages.CREATE_GAME, handleError(socket, async () => {
-        await createGame(socket);
+        await createGame(socket, server);
     }));
     socket.on(TopLevelClientToServerMessages.JOIN_GAME, handleError(socket, async (...args: any[]) => {
-        await joinGame(socket, ...args);
+        await joinGame(socket, server, ...args);
     }));
 
     socket.on('disconnect', () => {
