@@ -11,7 +11,7 @@ export const MAX_OBSERVERS = 10;
 
 const dtoProps: ReadonlyArray<(keyof GameType)> = ['code', 'runState', 'players', 'id'];
 
-enum GameRunState {
+export enum GameRunState {
     WAITING_FOR_PLAYERS_TO_JOIN = 'WAITING_FOR_PLAYERS_TO_JOIN',
     INSTRUCTING = 'INSTRUCTING',
     RUNNING_ROUND = 'RUNNING_ROUND',

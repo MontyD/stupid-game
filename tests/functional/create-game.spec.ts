@@ -1,4 +1,5 @@
 import { createClientSocket } from "./util/create-connection";
+import { Client } from '../../src/client/client';
 import 'jest';
 
 describe('connection handling', () => {
@@ -16,19 +17,14 @@ describe('connection handling', () => {
         toDisconnect = [];
     });
 
-    it('will create a game', done => {
-        socket.on('GAME:CREATED', ({ game, player }: { game: any, player: any }) => {
-            expect(game.code.length).toEqual(5);
-            expect(game.id.length).toEqual(24);
-            expect(game.players.length).toEqual(1);
-            expect(game.players[0]).toEqual(player.id);
-            expect(player.isHost).toBe(true);
-            expect(player.type).toEqual('OBSERVER');
-            done();
-        });
-        socket.on('ERROR', (failure: any) => expect(failure).toBeNull());
-        socket.on('VALIDATION_ERROR', (failure: any) => expect(failure).toBeNull());
-        socket.emit('CREATE_GAME');
+    it('will create a game', async () => {
+        const {game, players} = await Client.createAsHost(socket);
+        expect(game!.code.length).toEqual(5);
+        expect(game!.runState).toEqual('WAITING_FOR_PLAYERS_TO_JOIN');
+        expect(players.length).toEqual(1);
+        expect(players[0]!.name!).toEqual('HOST');
+        expect(players[0].isHost).toBe(true);
+        expect(players[0].type).toEqual('OBSERVER');
     });
 
     it('will allow players to join the game', done => {
