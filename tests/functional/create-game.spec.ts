@@ -60,4 +60,23 @@ describe('connection handling', () => {
         expect(playerJoinedListener).toHaveBeenCalledWith(host.otherPlayers[0]);
     });
 
+    it('will handle players disconnecting', async (done) => {
+        const secondSocket = createClientSocket();
+        const host = await Client.createAsHost(socket);
+        const activePlayerClient = await Client.joinGameAsPlayer(secondSocket, {
+            playerName: 'i-will-leave',
+            gameCode: host.game!.code,
+            observer: false,
+        });
+
+        host.onPlayerLeft((player: any) => {
+            expect(player.id).toEqual(activePlayerClient.player!.id);
+            expect(host.otherPlayers).toEqual([]);
+            done();
+        });
+
+        secondSocket.disconnect();
+
+    });
+
 });

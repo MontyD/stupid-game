@@ -8,6 +8,8 @@ import { JoinGameOptions } from "../controllers/game-controller";
 
 export type RequestCommands = TopLevelServerToSingleClientMessages | BroadcastGameMessages | SingleClientGameMessages;
 
+type PlayerHandler = (player: Player) => void;
+
 export class Client {
 
     public static createAsHost(socket: SocketIOClient.Socket): Promise<Client> {
@@ -22,12 +24,17 @@ export class Client {
     public player?: Player;
     public otherPlayers: Player[] = [];
 
-    private playerJoinedHandlers: Array<(player: Player) => void> = [];
+    private playerJoinedHandlers: PlayerHandler[] = [];
+    private playerLeftHandlers: PlayerHandler[] = [];
 
     private constructor(private socket: SocketIOClient.Socket) { }
 
-    public onPlayerJoined(handler: (player: Player) => void) {
+    public onPlayerJoined(handler: PlayerHandler) {
         this.playerJoinedHandlers.push(handler);
+    }
+
+    public onPlayerLeft(handler: PlayerHandler) {
+        this.playerLeftHandlers.push(handler);
     }
 
     public dispose(): void {
@@ -64,6 +71,12 @@ export class Client {
         this.playerJoinedHandlers.forEach(handler => handler(parsedPlayer));
     }
 
+    private handlePlayerLeft({ player }: { player: ObjectOfAny}): void {
+        const gonePlayer = Player.from(player);
+        this.otherPlayers = this.otherPlayers.filter(existingPlayer => existingPlayer.id !== gonePlayer.id);
+        this.playerLeftHandlers.forEach(handler => handler(gonePlayer));
+    }
+
     private async takeNext(command: RequestCommands): Promise<ObjectOfAny> {
         const result = await Promise.race([
             this.handlerToKeyedPromise<ObjectOfAny>('success', command),
@@ -89,6 +102,7 @@ export class Client {
 
     private setupHandlers() {
         this.socket.on(BroadcastGameMessages.PLAYER_JOINED, this.handlePlayerJoined.bind(this));
+        this.socket.on(BroadcastGameMessages.PLAYER_DISCONNECTED, this.handlePlayerLeft.bind(this));
     }
 
 }
