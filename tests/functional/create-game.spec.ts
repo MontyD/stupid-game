@@ -29,10 +29,12 @@ describe('connection handling', () => {
     });
 
     it('will allow players to join the game', async () => {
+        const playerJoinedListener = jest.fn();
         const secondSocket = createClientSocket();
         toDisconnect.push(secondSocket);
 
         const host = await Client.createAsHost(socket);
+        host.onPlayerJoined(playerJoinedListener);
         expect(host.otherPlayers).toEqual([]);
 
         const activeClient = await Client.joinGameAsPlayer(secondSocket, {
@@ -54,6 +56,8 @@ describe('connection handling', () => {
         expect(host.otherPlayers).toHaveLength(1);
         expect(host.otherPlayers[0]!.id).toEqual(activeClient.player.id);
         expect(host.otherPlayers[0]!.name).toEqual('new-player');
+
+        expect(playerJoinedListener).toHaveBeenCalledWith(host.otherPlayers[0]);
     });
 
 });

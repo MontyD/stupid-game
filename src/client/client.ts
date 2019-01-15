@@ -22,7 +22,13 @@ export class Client {
     public player?: Player;
     public otherPlayers: Player[] = [];
 
+    private playerJoinedHandlers: Array<(player: Player) => void> = [];
+
     private constructor(private socket: SocketIOClient.Socket) { }
+
+    public onPlayerJoined(handler: (player: Player) => void) {
+        this.playerJoinedHandlers.push(handler);
+    }
 
     public dispose(): void {
         this.socket.disconnect();
@@ -51,9 +57,11 @@ export class Client {
         return this;
     }
 
-    private onPlayerJoined({game, player}: {game: Game, player: Player}): void {
+    private handlePlayerJoined({ game, player }: { game: ObjectOfAny, player: ObjectOfAny }): void {
+        const parsedPlayer = Player.from(player);
         this.game = Game.from(game);
-        this.otherPlayers.push(Player.from(player));
+        this.otherPlayers.push(parsedPlayer);
+        this.playerJoinedHandlers.forEach(handler => handler(parsedPlayer));
     }
 
     private async takeNext(command: RequestCommands): Promise<ObjectOfAny> {
@@ -75,12 +83,12 @@ export class Client {
         return result.success as ObjectOfAny;
     }
 
-    private handlerToKeyedPromise<T>(keyName: string, eventName: string): Promise<{[key: string]: T}> {
-        return new Promise((resolve) => this.socket.once(eventName, (arg: any) => resolve({ [keyName]: arg} )));
+    private handlerToKeyedPromise<T>(keyName: string, eventName: string): Promise<{ [key: string]: T }> {
+        return new Promise((resolve) => this.socket.once(eventName, (arg: any) => resolve({ [keyName]: arg })));
     }
 
     private setupHandlers() {
-        this.socket.on(BroadcastGameMessages.PLAYER_JOINED, this.onPlayerJoined.bind(this));
+        this.socket.on(BroadcastGameMessages.PLAYER_JOINED, this.handlePlayerJoined.bind(this));
     }
 
 }
