@@ -1,11 +1,12 @@
-import { TopLevelClientToServerMessages, TopLevelServerToClientMessages } from "../models/messages/top-level";
+import { TopLevelClientToServerMessages, TopLevelServerToSingleClientMessages } from "../models/messages/top-level";
 import { ObjectOfAny } from '../utils/types';
-import { GameMessages } from '../models/messages/game';
+import { BroadcastGameMessages, SingleClientGameMessages } from '../models/messages/game';
 import { ValidationError } from './validation-error';
 import { Game } from './game';
 import { Player } from './player';
+import { JoinGameOptions } from "../controllers/game-controller";
 
-export type RequestCommands = TopLevelServerToClientMessages | GameMessages;
+export type RequestCommands = TopLevelServerToSingleClientMessages | BroadcastGameMessages | SingleClientGameMessages;
 
 export class Client {
 
@@ -13,8 +14,13 @@ export class Client {
         return (new Client(socket)).requestGameAsHost();
     }
 
+    public static joinGameAsPlayer(socket: SocketIOClient.Socket, options: JoinGameOptions): Promise<Client> {
+        return (new Client(socket)).joinGameAsPlayer(options);
+    }
+
     public game?: Game;
-    public players: Player[] = [];
+    public player?: Player;
+    public otherPlayers: Player[] = [];
 
     private constructor(private socket: SocketIOClient.Socket) { }
 
@@ -25,17 +31,32 @@ export class Client {
     private async requestGameAsHost(): Promise<this> {
         this.socket.emit(TopLevelClientToServerMessages.CREATE_GAME);
 
-        const response = await this.takeNext(GameMessages.CREATED);
+        const response = await this.takeNext(BroadcastGameMessages.CREATED);
         this.game = Game.from(response.game);
-        this.players.push(Player.from(response.player));
+        this.player = Player.from(response.player);
+        return this;
+    }
+
+    private async joinGameAsPlayer(options: JoinGameOptions): Promise<this> {
+        this.socket.emit(TopLevelClientToServerMessages.JOIN_GAME, options);
+
+        const response = await this.takeNext(SingleClientGameMessages.JOIN_SUCCESSFUL);
+        this.game = Game.from(response.game);
+        this.player = Player.from(response.player);
+        this.otherPlayers = response.otherPlayers.map(
+            (playerEntity: ObjectOfAny) => Player.from(playerEntity)
+        );
         return this;
     }
 
     private async takeNext(command: RequestCommands): Promise<ObjectOfAny> {
         const result = await Promise.race([
             this.handlerToKeyedPromise<ObjectOfAny>('success', command),
-            this.handlerToKeyedPromise<string>('validationError', TopLevelServerToClientMessages.VALIDATION_ERROR),
-            this.handlerToKeyedPromise<string>('failure', TopLevelServerToClientMessages.ERROR),
+            this.handlerToKeyedPromise<string>(
+                'validationError',
+                TopLevelServerToSingleClientMessages.VALIDATION_ERROR
+            ),
+            this.handlerToKeyedPromise<string>('failure', TopLevelServerToSingleClientMessages.ERROR),
         ]);
 
         if (result.validationError) {

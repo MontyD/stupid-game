@@ -18,38 +18,38 @@ describe('connection handling', () => {
     });
 
     it('will create a game', async () => {
-        const {game, players} = await Client.createAsHost(socket);
+        const {game, player, otherPlayers} = await Client.createAsHost(socket);
         expect(game!.code.length).toEqual(5);
         expect(game!.runState).toEqual('WAITING_FOR_PLAYERS_TO_JOIN');
-        expect(players.length).toEqual(1);
-        expect(players[0]!.name!).toEqual('HOST');
-        expect(players[0].isHost).toBe(true);
-        expect(players[0].type).toEqual('OBSERVER');
+        expect(player).not.toBeUndefined();
+        expect(player!.name).toEqual('HOST');
+        expect(player!.isHost).toBe(true);
+        expect(player!.type).toEqual('OBSERVER');
+        expect(otherPlayers).toHaveLength(0);
     });
 
-    it('will allow players to join the game', done => {
-        let firstPlayer: any = null;
-        socket.on('GAME:CREATED', ({ game, player }: { game: any, player: any }) => {
-            const secondSocket = createClientSocket();
-            toDisconnect.push(secondSocket);
-            firstPlayer = player;
-            secondSocket.emit('JOIN_GAME', { gameCode: game.code, playerName: 'another player' });
-        });
-        socket.on('GAME:PLAYER_JOINED', ({ player, game }: { player: any, game: any }) => {
-            expect(game.players.length).toEqual(2);
-            expect(game.players).toContain(player.id);
-            expect(game.players).toContain(firstPlayer.id);
-            expect(player.name).toEqual('another player');
-            expect(player.game).toEqual(game.id);
-            expect(player.type).toEqual('ACTIVE_PLAYER');
-            expect(player.isHost).toBe(false);
-            expect(firstPlayer.isHost).toBe(true);
-            done();
+    it('will allow players to join the game', async () => {
+        const secondSocket = createClientSocket();
+        toDisconnect.push(secondSocket);
+
+        const host = await Client.createAsHost(socket);
+        expect(host.otherPlayers).toEqual([]);
+
+        const activeClient = await Client.joinGameAsPlayer(secondSocket, {
+            playerName: 'new-player',
+            gameCode: host.game!.code,
+            observer: false,
         });
 
-        socket.on('ERROR', (failure: any) => expect(failure).toBeNull());
-        socket.on('VALIDATION_ERROR', (failure: any) => expect(failure).toBeNull());
-        socket.emit('CREATE_GAME');
+        if (!activeClient.game || !host.game || !activeClient.player || !host.player) {
+            throw new Error('game or player was null on activeClient or host');
+        }
+
+        expect(activeClient.game.id).toEqual(host.game.id);
+        expect(activeClient.otherPlayers).toHaveLength(1);
+        expect(activeClient.otherPlayers[0].id).toEqual(host.player.id);
+        expect(activeClient.player.name).toEqual('new-player');
+        expect(activeClient.player.type).toEqual('ACTIVE_PLAYER');
     });
 
 });

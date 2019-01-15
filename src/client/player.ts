@@ -14,6 +14,7 @@ export class Player {
         return player as Player;
     }
 
+    public id: string = '';
     public name: string = '';
     public type: TypeOfPlayer = TypeOfPlayer.OBSERVER;
     public isHost: boolean = false;

@@ -4,7 +4,7 @@ export enum TopLevelClientToServerMessages {
     RECONNECT_TO_GAME = 'RECONNECT',
 }
 
-export enum TopLevelServerToClientMessages {
+export enum TopLevelServerToSingleClientMessages {
     ERROR = 'ERROR',
     VALIDATION_ERROR = 'VALIDATION_ERROR',
 }

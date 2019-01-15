@@ -14,6 +14,7 @@ export class Game {
         return game as Game;
     }
 
+    public id: string = '';
     public runState: GameRunState  = GameRunState.WAITING_FOR_PLAYERS_TO_JOIN;
     public code: string = '';
 }

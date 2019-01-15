@@ -1,6 +1,6 @@
 import { Socket, Server } from 'socket.io';
 import { logger } from '../logger';
-import { GameMessages } from '../models/messages/game';
+import { BroadcastGameMessages, SingleClientGameMessages } from '../models/messages/game';
 import { Game } from '../models/entities/game';
 import { Player } from '../models/entities/player';
 
@@ -12,15 +12,15 @@ export const createGame = async (socket: Socket, server: Server): Promise<void> 
     await game.addPlayer(hostPlayer);
 
     socket.join(game.id);
-    server.to(game.id).emit(GameMessages.CREATED, {
+    server.to(game.id).emit(BroadcastGameMessages.CREATED, {
         player: hostPlayer.toDTO(),
         game: game.toDTO(),
     });
 };
 
-interface JoinGameArgs { gameCode: string; playerName: string; observer: boolean; }
+export interface JoinGameOptions { gameCode: string; playerName: string; observer: boolean; }
 export const joinGame = async (socket: Socket, server: Server, ...args: any[]) => {
-    const { gameCode, playerName, observer }: JoinGameArgs = args[0] || {};
+    const { gameCode, playerName, observer }: JoinGameOptions = args[0] || {};
     logger.info('joining game', gameCode, playerName, socket.id);
 
     const game = await Game.findByCode(gameCode);
@@ -29,13 +29,18 @@ export const joinGame = async (socket: Socket, server: Server, ...args: any[]) =
     }
 
     const newPlayer = await Player.generatePlayer(game, playerName, socket.id, observer);
+    const otherPlayers = (await Player.findAllByGame(game)).map(player => player.toDTO());
+
     await game.addPlayer(newPlayer);
 
-    socket.join(game.id);
-    server.to(game.id).emit(GameMessages.PLAYER_JOINED, {
+    const responseBody = {
         player: newPlayer.toDTO(),
-        game: game.toDTO(),
-    });
+        game: game ? game.toDTO() : null,
+    };
+
+    socket.join(game.id);
+    server.to(game.id).emit(BroadcastGameMessages.PLAYER_JOINED, responseBody);
+    socket.emit(SingleClientGameMessages.JOIN_SUCCESSFUL, { otherPlayers, ...responseBody });
 };
 
 export const disconnectPlayer = async (socket: Socket, server: Server) => {
@@ -47,10 +52,11 @@ export const disconnectPlayer = async (socket: Socket, server: Server) => {
 
     const game = await Game.findById(player.game);
     if (game) {
-        await game.removePlayer(player);
+        // todo fix versioning problem
+        // await game.removePlayer(player);
     }
 
-    server.to(player.game.toHexString()).emit(GameMessages.PLAYER_DISCONNECTED, {
+    server.to(player.game.toHexString()).emit(BroadcastGameMessages.PLAYER_DISCONNECTED, {
         player: player.toDTO(),
         game: game ? game.toDTO() : null,
     });

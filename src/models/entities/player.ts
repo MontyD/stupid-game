@@ -50,6 +50,14 @@ export class PlayerEntity extends Typegoose {
         return this.findOne({ socketId });
     }
 
+    @staticMethod
+    public static findAllByGame(
+        this: ModelType<PlayerEntity> & typeof PlayerEntity,
+        game: GameType
+    ): Promise<PlayerType[]> {
+        return this.find({ _id: { $in: game.players } }).exec();
+    }
+
     @prop({ required: true, validate: (val: string) => typeof val === 'string' })
     public name!: string;
 

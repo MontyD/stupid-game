@@ -1,7 +1,7 @@
 import { Socket, Server } from 'socket.io';
 import { logger } from './logger';
 import { createGame, joinGame, disconnectPlayer } from './controllers/game-controller';
-import { TopLevelClientToServerMessages, TopLevelServerToClientMessages } from './models/messages/top-level';
+import { TopLevelClientToServerMessages, TopLevelServerToSingleClientMessages } from './models/messages/top-level';
 
 type SocketHandler = (...args: any[]) => void;
 
@@ -25,7 +25,7 @@ export const handleError = (socket: Socket, handler: SocketHandler): SocketHandl
             await handler(...args);
         } catch (error) {
             if (error && error.name === 'ValidationError') {
-                 socket.emit(TopLevelServerToClientMessages.VALIDATION_ERROR, error.message);
+                 socket.emit(TopLevelServerToSingleClientMessages.VALIDATION_ERROR, error.message);
                  return;
             }
             logger.error(
@@ -34,7 +34,7 @@ export const handleError = (socket: Socket, handler: SocketHandler): SocketHandl
                 error && error.toString(),
                 error && error.stack
             );
-            socket.emit(TopLevelServerToClientMessages.ERROR, 'Unhandled socket error');
+            socket.emit(TopLevelServerToSingleClientMessages.ERROR, 'Unhandled socket error');
         }
     };
 };
