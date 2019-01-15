@@ -1,8 +1,9 @@
 import { Socket, Server } from 'socket.io';
 import { logger } from '../logger';
 import { BroadcastGameMessages, SingleClientGameMessages } from '../models/messages/game';
-import { Game } from '../models/entities/game';
+import { Game, GameType } from '../models/entities/game';
 import { Player } from '../models/entities/player';
+import { retryWithErrorHandling } from '../utils/error-handling';
 
 export const createGame = async (socket: Socket, server: Server): Promise<void> => {
     logger.info('creating game for socket', socket.id);
@@ -50,11 +51,14 @@ export const disconnectPlayer = async (socket: Socket, server: Server) => {
         return;
     }
 
-    const game = await Game.findById(player.game);
-    if (game) {
-        // todo fix versioning problem
-        // await game.removePlayer(player);
-    }
+    // retry because of version conflicts
+    const game = await retryWithErrorHandling(async () => {
+        const existingGame = await Game.findById(player.game);
+        if (existingGame) {
+            await existingGame.removePlayer(player);
+        }
+        return existingGame;
+    }, 2);
 
     server.to(player.game.toHexString()).emit(BroadcastGameMessages.PLAYER_DISCONNECTED, {
         player: player.toDTO(),

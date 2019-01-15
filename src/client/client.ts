@@ -34,6 +34,7 @@ export class Client {
         const response = await this.takeNext(BroadcastGameMessages.CREATED);
         this.game = Game.from(response.game);
         this.player = Player.from(response.player);
+        this.setupHandlers();
         return this;
     }
 
@@ -46,7 +47,13 @@ export class Client {
         this.otherPlayers = response.otherPlayers.map(
             (playerEntity: ObjectOfAny) => Player.from(playerEntity)
         );
+        this.setupHandlers();
         return this;
+    }
+
+    private onPlayerJoined({game, player}: {game: Game, player: Player}): void {
+        this.game = Game.from(game);
+        this.otherPlayers.push(Player.from(player));
     }
 
     private async takeNext(command: RequestCommands): Promise<ObjectOfAny> {
@@ -70,6 +77,10 @@ export class Client {
 
     private handlerToKeyedPromise<T>(keyName: string, eventName: string): Promise<{[key: string]: T}> {
         return new Promise((resolve) => this.socket.once(eventName, (arg: any) => resolve({ [keyName]: arg} )));
+    }
+
+    private setupHandlers() {
+        this.socket.on(BroadcastGameMessages.PLAYER_JOINED, this.onPlayerJoined.bind(this));
     }
 
 }

@@ -50,6 +50,10 @@ describe('connection handling', () => {
         expect(activeClient.otherPlayers[0].id).toEqual(host.player.id);
         expect(activeClient.player.name).toEqual('new-player');
         expect(activeClient.player.type).toEqual('ACTIVE_PLAYER');
+
+        expect(host.otherPlayers).toHaveLength(1);
+        expect(host.otherPlayers[0]!.id).toEqual(activeClient.player.id);
+        expect(host.otherPlayers[0]!.name).toEqual('new-player');
     });
 
 });
