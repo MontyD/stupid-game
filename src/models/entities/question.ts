@@ -3,6 +3,7 @@ import { prop, InstanceType, Typegoose } from 'typegoose';
 export enum TypeOfQuestion {
     PERSONAL = 'PERSONAL',
     DRAW = 'DRAW_QUESTION',
+    LIVE_DRAW = 'LIVE_DRAW',
     CAPTION = 'CAPTION',
 }
 
@@ -12,10 +13,20 @@ export enum QuestionLevel {
     MILD = 'MILD',
 }
 
+export enum AnswerType {
+    DRAWING = 'DRAWING',
+    LIVE_DRAW = 'LIVE_DRAW',
+    PLAYER_NAME = 'PLAYER_NAME',
+    STRING = 'STRING',
+}
+
 export class QuestionEntity extends Typegoose {
 
     @prop({ required: true })
     public text!: string;
+
+    @prop()
+    public answer!: string;
 
     @prop({ enum: TypeOfQuestion, required: true })
     public type!: TypeOfQuestion;
