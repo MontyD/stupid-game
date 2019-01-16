@@ -58,7 +58,7 @@ export class PlayerEntity extends Typegoose {
         return this.find({ _id: { $in: game.players } }).exec();
     }
 
-    @prop({ required: true, validate: (val: string) => typeof val === 'string' })
+    @prop({ required: true })
     public name!: string;
 
     @prop({ enum: TypeOfPlayer, required: true, default: TypeOfPlayer.ACTIVE_PLAYER })
@@ -66,6 +66,9 @@ export class PlayerEntity extends Typegoose {
 
     @prop({ default: false, required: true })
     public isHost!: boolean;
+
+    @prop({ required: true, default: 0 })
+    public score!: number;
 
     @prop({ ref: GameEntity, required: true })
     public game!: ObjectId;

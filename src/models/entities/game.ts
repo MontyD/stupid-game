@@ -4,6 +4,7 @@ import { dtoParser } from '../../utils/parser';
 import { ObjectId } from 'mongodb';
 import { ObjectOfAny } from '../../utils/types';
 import { randomString } from '../../utils/random';
+import { GameDefinitionEntity } from './gameDefinition';
 
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 10;
@@ -39,8 +40,17 @@ export class GameEntity extends Typegoose {
     @prop({ required: true, default: GameRunState.WAITING_FOR_PLAYERS_TO_JOIN })
     public runState!: GameRunState;
 
+    @prop({ required: true, default: 0 })
+    public currentRoundIndex!: number;
+
+    @prop({ required: true, default: 0 })
+    public currentQuestionIndex!: number;
+
     @arrayProp({ itemsRef: PlayerEntity, default: [] })
     public players!: ObjectId[];
+
+    @prop({ required: true, ref: GameDefinitionEntity })
+    public gameDefinition!: ObjectId;
 
     @instanceMethod
     public toDTO(this: InstanceType<GameEntity>): ObjectOfAny {
