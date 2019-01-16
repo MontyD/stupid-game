@@ -4,6 +4,7 @@ import { PORT } from './config/process';
 import { logger } from './logger';
 import { handle } from './router';
 import * as database from './database';
+import { runMigrations } from './migrations/migration';
 
 const createServer = async () => {
     const httpServer = http.createServer((req, res) => {
@@ -17,6 +18,8 @@ const createServer = async () => {
     });
 
     await database.initConnection();
+
+    await runMigrations();
 
     httpServer.listen(PORT, () => {
         logger.info(`Successfully listening on port ${PORT}`);

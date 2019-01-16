@@ -28,6 +28,9 @@ export class QuestionEntity extends Typegoose {
     @prop()
     public answer!: string;
 
+    @prop({ enum: AnswerType, required: true, default: AnswerType.STRING })
+    public answerType!: AnswerType;
+
     @prop({ enum: TypeOfQuestion, required: true })
     public type!: TypeOfQuestion;
 

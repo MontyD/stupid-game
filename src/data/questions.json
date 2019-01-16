@@ -1,0 +1,129 @@
+{
+    "questions": [{
+        "text": "Feminism",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Lenin dabs",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Flossing",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Smelly bear",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Anger is the best emotion",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "The fear of failure",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Waiting for the cat to come home",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Loud train",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Clouds eat candy floss",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Unicorns in space",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "The mars rover goes to Starbucks",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Elon Musk has a funny musk",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Face mask",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Leave your dignity at the door",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Digging a hole",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Jumping for depression",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Smell my foot",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }, {
+        "text": "Look a cow",
+        "level": "MILD",
+        "numberOfPointsForWinner": 100,
+        "numberOfPointsForGuesser": 50,
+        "numberOfPointsForTrapper": 50,
+        "answerType": "STRING"
+    }]
+}
