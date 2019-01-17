@@ -1,17 +1,3 @@
-import { addQuestionsMigration } from "./add-questions";
-import { logger } from "../logger";
-
-
-const migrations: Migration[] = [
-    addQuestionsMigration,
-];
-
-export const runMigrations = async () => {
-    logger.info(`Running ${migrations.length} migration(s)`);
-    const promises = migrations.map(migration => migration.execute());
-    await Promise.all(promises);
-};
-
 export class Migration {
     constructor(
         private shouldRun: () => Promise<boolean>,

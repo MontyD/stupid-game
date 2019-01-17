@@ -4,7 +4,7 @@ import { PORT } from './config/process';
 import { logger } from './logger';
 import { handle } from './router';
 import * as database from './database';
-import { runMigrations } from './migrations/migration';
+import { runMigrations } from './migrations/run-migrations';
 
 const createServer = async () => {
     const httpServer = http.createServer((req, res) => {

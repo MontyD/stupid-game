@@ -10,8 +10,7 @@
         "sourceMap": true,
         "outDir": "dist",
         "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "resolveJsonModule": true,
+        "experimentalDecorators": true
     },
     "include": [
         "src"

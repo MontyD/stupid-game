@@ -1,0 +1,147 @@
+{
+    "questions": [{
+            "text": "Feminism",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Lenin dabs",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Flossing",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Smelly bear",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Anger is the best emotion",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "The fear of failure",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Waiting for the cat to come home",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Loud train",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Clouds eat candy floss",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Unicorns in space",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "The mars rover goes to Starbucks",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Elon Musk has a funny musk",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Face mask",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Leave your dignity at the door",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Digging a hole",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Jumping for depression",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Smell my foot",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }, {
+            "text": "Look a cow",
+            "type": "DRAW",
+            "level": "MILD",
+            "numberOfPointsForWinner": 100,
+            "numberOfPointsForGuesser": 50,
+            "numberOfPointsForTrapper": 50,
+            "answerType": "STRING"
+        }]
+}

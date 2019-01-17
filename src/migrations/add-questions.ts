@@ -1,13 +1,27 @@
 import { Question } from "../models/entities/question";
 import { Migration } from './migration';
-import * as data from '../data/questions.json';
+import { ObjectOfAny } from "../utils/types";
+import { resolve } from "path";
+import { readFile } from "fs";
+import { promisify } from "util";
+
+const readFileAsync = promisify(readFile);
+
+const getQuestionsData = async (): Promise<ObjectOfAny[]> => {
+    const path = resolve('data', 'questions.json');
+    const fileContent = await readFileAsync(path, 'utf8');
+    return JSON.parse(fileContent).questions as ObjectOfAny[];
+};
 
 const shouldAddQuestions = async () => {
-    return (await Question.count({})) === data.questions.length;
+    const dbQuestionAmount = await Question.count({});
+    const fileQuestionAmount = (await getQuestionsData()).length;
+    return dbQuestionAmount < fileQuestionAmount;
 };
 
 const addQuestions = async () => {
-    const promises = data.questions.map(question => {
+    const questions = await getQuestionsData();
+    const promises = questions.map(question => {
         const questionEntity = new Question(question);
         return questionEntity.save();
     });

@@ -2,7 +2,7 @@ import { prop, InstanceType, Typegoose } from 'typegoose';
 
 export enum TypeOfQuestion {
     PERSONAL = 'PERSONAL',
-    DRAW = 'DRAW_QUESTION',
+    DRAW = 'DRAW',
     LIVE_DRAW = 'LIVE_DRAW',
     CAPTION = 'CAPTION',
 }
