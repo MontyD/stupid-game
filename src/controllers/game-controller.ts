@@ -24,7 +24,7 @@ export const createGame = async (socket: Socket, server: Server): Promise<void> 
 
 export interface JoinGameOptions { gameCode?: string; playerName?: string; observer?: boolean; }
 export const joinGame = async (socket: Socket, server: Server, jointArgs: JoinGameOptions = {}) => {
-    const { gameCode, playerName, observer }: JoinGameOptions = jointArgs || {};
+    const { gameCode, playerName, observer }: JoinGameOptions = jointArgs;
     logger.info('joining game', gameCode, playerName, socket.id);
 
     const game = await Game.findByCode(gameCode);

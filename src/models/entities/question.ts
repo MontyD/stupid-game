@@ -44,7 +44,7 @@ export class QuestionEntity extends Typegoose {
         return Question.aggregate([]).match({ type }).sample(limit).exec();
     }
 
-    @prop({ required: true })
+    @prop({ required: true, unique: true })
     public text!: string;
 
     @prop()

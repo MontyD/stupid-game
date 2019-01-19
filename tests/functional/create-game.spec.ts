@@ -30,8 +30,8 @@ describe('connection handling', () => {
         expect(gameDefinition!.rounds[0]!.questions).toHaveLength(5);
 
         // check questions are unique
-        const questionText = gameDefinition!.rounds[0]!.questions.map(q => q.text);
-        expect(new Set(questionText).size).toEqual(questionText.length);
+        const questionsText = gameDefinition!.rounds[0]!.questions.map(q => q.text);
+        expect(new Set(questionsText).size).toEqual(questionsText.length);
     });
 
     it('will allow players to join the game', async () => {
