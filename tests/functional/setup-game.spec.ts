@@ -2,15 +2,15 @@ import { createClientSocket } from "./util/create-connection";
 import { Client } from '../../src/client/client';
 import 'jest';
 
-describe('connection handling', () => {
+describe('game setup', () => {
 
-    let socket: SocketIOClient.Socket;
     let toDisconnect: SocketIOClient.Socket[] = [];
 
-    beforeEach(() => {
-        socket = createClientSocket();
-        toDisconnect.push(socket);
-    });
+    const createSocket = (): SocketIOClient.Socket => {
+        const newSocket = createClientSocket();
+        toDisconnect.push(newSocket);
+        return newSocket;
+    };
 
     afterEach(() => {
         toDisconnect.forEach(io => io.disconnect());
@@ -18,7 +18,7 @@ describe('connection handling', () => {
     });
 
     it('will create a game', async () => {
-        const {game, player, otherPlayers} = await Client.createAsHost(socket);
+        const {game, player, otherPlayers} = await Client.createAsHost(createSocket());
         expect(game!.code.length).toEqual(5);
         expect(game!.runState).toEqual('WAITING_FOR_PLAYERS_TO_JOIN');
         expect(player).not.toBeUndefined();
@@ -29,14 +29,12 @@ describe('connection handling', () => {
 
     it('will allow players to join the game', async () => {
         const playerJoinedListener = jest.fn();
-        const secondSocket = createClientSocket();
-        toDisconnect.push(secondSocket);
 
-        const host = await Client.createAsHost(socket);
+        const host = await Client.createAsHost(createSocket());
         host.onPlayerJoined(playerJoinedListener);
         expect(host.otherPlayers).toEqual([]);
 
-        const activeClient = await Client.joinGameAsPlayer(secondSocket, {
+        const activeClient = await Client.joinGameAsPlayer(createSocket(), {
             playerName: 'new-player',
             gameCode: host.game!.code,
         });
@@ -58,9 +56,9 @@ describe('connection handling', () => {
     });
 
     it('will handle players disconnecting', async (done) => {
-        const secondSocket = createClientSocket();
-        const host = await Client.createAsHost(socket);
-        const activePlayerClient = await Client.joinGameAsPlayer(secondSocket, {
+        const socketToDisconnect = createClientSocket();
+        const host = await Client.createAsHost(createSocket());
+        const activePlayerClient = await Client.joinGameAsPlayer(socketToDisconnect, {
             playerName: 'i-will-leave',
             gameCode: host.game!.code,
         });
@@ -71,36 +69,58 @@ describe('connection handling', () => {
             done();
         });
 
-        secondSocket.disconnect();
+        socketToDisconnect.disconnect();
     });
 
     it('will limit the number of players to 12', async () => {
-        const host = await Client.createAsHost(socket);
+        const host = await Client.createAsHost(createSocket());
         const players = [];
 
         let i = 0;
         while (i++ < 12) {
-            const newPlayerSocket = createClientSocket();
-            const newPlayer = await Client.joinGameAsPlayer(newPlayerSocket, {
+            const newPlayer = await Client.joinGameAsPlayer(createSocket(), {
                 playerName: `player ${i}`,
                 gameCode: host.game!.code,
             });
-            toDisconnect.push(newPlayerSocket);
             players.push(newPlayer);
         }
 
-        try {
-            const newPlayerSocket = createClientSocket();
-            toDisconnect.push(newPlayerSocket);
-            await Client.joinGameAsPlayer(newPlayerSocket, {
+        await expect((async () => {
+            await Client.joinGameAsPlayer(createSocket(), {
                 playerName: 'one player too many',
                 gameCode: host.game!.code,
             });
-            // should never be here, should throw
-            expect(true).toBe(false);
-        } catch (exception) {
-            expect(exception).toMatchSnapshot();
+        })()).rejects.toMatchSnapshot();
+    });
+
+    it('will only allow the game to start if we have enough players', async () => {
+        const host = await Client.createAsHost(createSocket());
+
+        let i = 0;
+        while (i++ < 2) {
+            await expect((async () => {
+                const client = await Client.joinGameAsPlayer(createSocket(), {
+                    playerName: `not enough players ${i}`,
+                    gameCode: host.game!.code,
+                });
+                await client.startGame();
+            })()).rejects.toMatchSnapshot();
         }
+    });
+
+    fit('will not start the same game twice', async () => {
+        const host = await Client.createAsHost(createSocket());
+
+        let i = 0;
+        while (i++ < 3) {
+            await Client.joinGameAsPlayer(createSocket(), {
+                playerName: `player ${i}`,
+                gameCode: host.game!.code,
+            });
+        }
+
+        await host.startGame();
+        await host.startGame();
     });
 
 });

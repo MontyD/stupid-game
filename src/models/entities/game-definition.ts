@@ -1,4 +1,4 @@
-import { InstanceType, Typegoose, arrayProp, Ref, staticMethod, ModelType } from 'typegoose';
+import { InstanceType, Typegoose, arrayProp, staticMethod, ModelType } from 'typegoose';
 import { TypeOfQuestion, QuestionType, Question } from './question';
 import { GameType } from './game';
 import { ValidationError } from '../../controllers/validation-error';
@@ -8,10 +8,7 @@ export interface GameDefinitionDTO {
     rounds: Round[];
 }
 
-const DEFAULT_ROUNDS = [{
-    questionType: TypeOfQuestion.DRAW,
-    questionAmount: 5,
-}];
+const DEFAULT_ROUNDS = [TypeOfQuestion.DRAW];
 
 class Round {
     constructor(public type: TypeOfQuestion, public questions: QuestionType[] = []) { }
@@ -21,11 +18,12 @@ export class GameDefinitionEntity extends Typegoose {
 
     @staticMethod
     public static async generate(
-        this: ModelType<GameDefinitionEntity> & typeof GameDefinitionEntity
+        this: ModelType<GameDefinitionEntity> & typeof GameDefinitionEntity,
+        game: GameType
     ): Promise<GameDefinitionType> {
         const rounds: Round[] = [];
-        for (const {questionType, questionAmount} of DEFAULT_ROUNDS) {
-            const questions = await Question.findRandomForType(questionType, questionAmount);
+        for (const questionType of DEFAULT_ROUNDS) {
+            const questions = await Question.findRandomForType(questionType, game.players.length);
             rounds.push(new Round(questionType, questions));
         }
         const gameDef = new GameDefinition({ rounds });

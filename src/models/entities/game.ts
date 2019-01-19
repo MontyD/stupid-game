@@ -1,9 +1,10 @@
 import { prop, arrayProp, instanceMethod, staticMethod, InstanceType, Typegoose, ModelType  } from 'typegoose';
-import { PlayerEntity, PlayerType, Player } from './player';
+import { PlayerEntity, PlayerType } from './player';
 import { ObjectId } from 'mongodb';
 import { randomString } from '../../utils/random';
-import { GameDefinitionEntity } from './gameDefinition';
+import { GameDefinitionEntity } from './game-definition';
 import { ValidationError } from '../../controllers/validation-error';
+import { assertCanStart } from '../../functions/game-functions';
 
 export interface GameDTO {
     id: string;
@@ -11,6 +12,7 @@ export interface GameDTO {
     runState: GameRunState;
     currentRoundIndex: number;
     currentQuestionIndex: number;
+    players: string[];
 }
 
 export const MIN_PLAYERS = 3;
@@ -18,7 +20,6 @@ export const MAX_PLAYERS = 12;
 
 export enum GameRunState {
     WAITING_FOR_PLAYERS_TO_JOIN = 'WAITING_FOR_PLAYERS_TO_JOIN',
-    INSTRUCTING = 'INSTRUCTING',
     RUNNING_ROUND = 'RUNNING_ROUND',
     COMPLETED = 'COMPLETED',
     ABORTED = 'ABORTED',
@@ -36,6 +37,18 @@ export class GameEntity extends Typegoose {
         const game = await this.findOne({ code });
         if (!game) {
             throw new Error(`Cannot find game by code ${code}`);
+        }
+        return game;
+    }
+
+    @staticMethod
+    public static async get(
+        this: ModelType<GameEntity> & typeof GameEntity,
+        id: string
+    ): Promise<GameType> {
+        const game = await this.findById(id);
+        if (!game) {
+            throw new Error(`Cannot find game by ObjectId(${id})`);
         }
         return game;
     }
@@ -81,6 +94,13 @@ export class GameEntity extends Typegoose {
     @instanceMethod
     public removePlayer(this: InstanceType<GameEntity>, player: PlayerType): Promise<InstanceType<GameEntity>> {
         this.players = this.players.filter(playerObjectId => !playerObjectId.equals(player._id));
+        return this.save();
+    }
+
+    @instanceMethod
+    public start(this: InstanceType<GameEntity>): Promise<InstanceType<GameEntity>> {
+        assertCanStart(this);
+        this.runState = GameRunState.RUNNING_ROUND;
         return this.save();
     }
 

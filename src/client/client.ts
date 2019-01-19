@@ -1,15 +1,16 @@
 import { TopLevelClientToServerMessages, TopLevelServerToSingleClientMessages } from "../models/messages/top-level";
 import { ObjectOfAny } from '../utils/types';
-import { BroadcastGameMessages, SingleClientGameMessages } from '../models/messages/game';
+import { BroadcastGameMessages, SingleClientGameMessages, ClientToServerGameMessages } from '../models/messages/game';
 import { JoinGameOptions } from "../controllers/game-controller";
 import { PlayerDTO } from "../models/entities/player";
-import { GameDTO } from "../models/entities/game";
-import { GameDefinitionDTO } from "../models/entities/gameDefinition";
+import { GameDTO, GameRunState } from "../models/entities/game";
+import { GameDefinitionDTO } from "../models/entities/game-definition";
 import { ValidationError } from "../controllers/validation-error";
 
 export type RequestCommands = TopLevelServerToSingleClientMessages | BroadcastGameMessages | SingleClientGameMessages;
 
 type PlayerHandler = (player: PlayerDTO) => void;
+type GameDefinitionHandler = (gameDefinition: GameDefinitionDTO) => void;
 
 export class Client {
 
@@ -28,8 +29,14 @@ export class Client {
 
     private playerJoinedHandlers: PlayerHandler[] = [];
     private playerLeftHandlers: PlayerHandler[] = [];
+    private startGameHandlers: GameDefinitionHandler[] = [];
 
     private constructor(private socket: SocketIOClient.Socket) { }
+
+    public async startGame() {
+        this.socket.emit(ClientToServerGameMessages.START);
+        await this.takeNext(BroadcastGameMessages.STARTED);
+    }
 
     public onPlayerJoined(handler: PlayerHandler) {
         this.playerJoinedHandlers.push(handler);
@@ -37,6 +44,10 @@ export class Client {
 
     public onPlayerLeft(handler: PlayerHandler) {
         this.playerLeftHandlers.push(handler);
+    }
+
+    public onGameStarted(handler: GameDefinitionHandler) {
+        this.startGameHandlers.push(handler);
     }
 
     public dispose(): void {
@@ -79,6 +90,15 @@ export class Client {
         this.playerLeftHandlers.forEach(handler => handler(gonePlayer));
     }
 
+    private handleGameStarted({ gameDefinition }: { gameDefinition: GameDefinitionDTO }): void {
+        if (!this.game) {
+            return;
+        }
+        this.game.runState = GameRunState.RUNNING_ROUND;
+        this.gameDefinition = gameDefinition;
+        this.startGameHandlers.forEach(handler => handler(gameDefinition));
+    }
+
     private async takeNext(command: RequestCommands): Promise<ObjectOfAny> {
         const result = await Promise.race([
             this.handlerToKeyedPromise<ObjectOfAny>('success', command),
@@ -105,6 +125,7 @@ export class Client {
     private setupHandlers() {
         this.socket.on(BroadcastGameMessages.PLAYER_JOINED, this.handlePlayerJoined.bind(this));
         this.socket.on(BroadcastGameMessages.PLAYER_DISCONNECTED, this.handlePlayerLeft.bind(this));
+        this.socket.on(BroadcastGameMessages.STARTED, this.handleGameStarted.bind(this));
     }
 
 }

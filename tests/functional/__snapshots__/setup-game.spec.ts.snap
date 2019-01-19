@@ -1,0 +1,11 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`game setup will limit the number of players to 12 1`] = `[ValidationError: Game is full]`;
+
+exports[`game setup will not start the same game twice 1`] = `[ValidationError: Not enough players to start game]`;
+
+exports[`game setup will not start the same game twice 2`] = `[ValidationError: Not enough players to start game]`;
+
+exports[`game setup will only allow the game to start if we have enough players 1`] = `[ValidationError: Not enough players to start game]`;
+
+exports[`game setup will only allow the game to start if we have enough players 2`] = `[ValidationError: Not enough players to start game]`;
