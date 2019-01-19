@@ -1,8 +1,9 @@
 import { prop, arrayProp, instanceMethod, staticMethod, InstanceType, Typegoose, ModelType  } from 'typegoose';
-import { PlayerEntity, PlayerType } from './player';
+import { PlayerEntity, PlayerType, Player } from './player';
 import { ObjectId } from 'mongodb';
 import { randomString } from '../../utils/random';
-import { GameDefinitionEntity, GameDefinitionType } from './gameDefinition';
+import { GameDefinitionEntity } from './gameDefinition';
+import { ValidationError } from '../../controllers/validation-error';
 
 export interface GameDTO {
     id: string;
@@ -13,8 +14,7 @@ export interface GameDTO {
 }
 
 export const MIN_PLAYERS = 3;
-export const MAX_PLAYERS = 10;
-export const MAX_OBSERVERS = 10;
+export const MAX_PLAYERS = 12;
 
 export enum GameRunState {
     WAITING_FOR_PLAYERS_TO_JOIN = 'WAITING_FOR_PLAYERS_TO_JOIN',
@@ -42,10 +42,9 @@ export class GameEntity extends Typegoose {
 
     @staticMethod
     public static async generateHost(
-        this: ModelType<GameEntity> & typeof GameEntity,
-        gameDefinition: GameDefinitionType
+        this: ModelType<GameEntity> & typeof GameEntity
     ): Promise<GameType> {
-        return (new Game({ code: randomString(), gameDefinition: gameDefinition._id })).save();
+        return (new Game({ code: randomString() })).save();
     }
 
     @prop({ required: true, unique: true, validate: validateGameCode })
@@ -63,11 +62,18 @@ export class GameEntity extends Typegoose {
     @arrayProp({ itemsRef: PlayerEntity, default: [] })
     public players!: ObjectId[];
 
-    @prop({ required: true, ref: GameDefinitionEntity })
-    public gameDefinition!: ObjectId;
+    @prop({ ref: GameDefinitionEntity })
+    public gameDefinition?: ObjectId;
 
     @instanceMethod
     public addPlayer(this: InstanceType<GameEntity>, player: PlayerType): Promise<InstanceType<GameEntity>> {
+        if (this.runState !== GameRunState.WAITING_FOR_PLAYERS_TO_JOIN) {
+            throw new ValidationError('Cannot add player while game is in progress');
+        }
+        // number of players (minus the host) must be less than MAX_PLAYERS
+        if ((this.players.length - 1) === MAX_PLAYERS) {
+            throw new ValidationError('Game is full');
+        }
         this.players.push(player._id);
         return this.save();
     }

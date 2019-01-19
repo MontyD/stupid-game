@@ -5,13 +5,7 @@ import { ObjectId } from 'mongodb';
 export interface PlayerDTO {
     id: string;
     name: string;
-    type: TypeOfPlayer;
     isHost: boolean;
-}
-
-export enum TypeOfPlayer {
-    ACTIVE_PLAYER = 'ACTIVE_PLAYER',
-    OBSERVER = 'OBSERVER',
 }
 
 export class PlayerEntity extends Typegoose {
@@ -26,7 +20,6 @@ export class PlayerEntity extends Typegoose {
             socketId,
             name: 'HOST',
             game: game._id,
-            type: TypeOfPlayer.OBSERVER,
             isHost: true,
         };
         return (new Player(newPlayer)).save();
@@ -44,7 +37,6 @@ export class PlayerEntity extends Typegoose {
             name,
             socketId,
             game: game._id,
-            type: observer ? TypeOfPlayer.OBSERVER : TypeOfPlayer.ACTIVE_PLAYER,
         })).save();
     }
 
@@ -56,16 +48,15 @@ export class PlayerEntity extends Typegoose {
     @staticMethod
     public static findAllByGame(
         this: ModelType<PlayerEntity> & typeof PlayerEntity,
-        game: GameType
+        game: GameType,
+        excludeHost: boolean = false
     ): Promise<PlayerType[]> {
-        return this.find({ _id: { $in: game.players } }).exec();
+        const extraConditions = excludeHost ? { isHost: false } : {};
+        return this.find({ _id: { $in: game.players }, ...extraConditions }).exec();
     }
 
     @prop({ required: true })
     public name!: string;
-
-    @prop({ enum: TypeOfPlayer, required: true, default: TypeOfPlayer.ACTIVE_PLAYER })
-    public type!: TypeOfPlayer;
 
     @prop({ default: false, required: true })
     public isHost!: boolean;

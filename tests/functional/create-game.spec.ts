@@ -18,20 +18,13 @@ describe('connection handling', () => {
     });
 
     it('will create a game', async () => {
-        const {game, player, otherPlayers, gameDefinition} = await Client.createAsHost(socket);
+        const {game, player, otherPlayers} = await Client.createAsHost(socket);
         expect(game!.code.length).toEqual(5);
         expect(game!.runState).toEqual('WAITING_FOR_PLAYERS_TO_JOIN');
         expect(player).not.toBeUndefined();
         expect(player!.name).toEqual('HOST');
         expect(player!.isHost).toBe(true);
-        expect(player!.type).toEqual('OBSERVER');
         expect(otherPlayers).toHaveLength(0);
-        expect(gameDefinition!.rounds).toHaveLength(1);
-        expect(gameDefinition!.rounds[0]!.questions).toHaveLength(5);
-
-        // check questions are unique
-        const questionsText = gameDefinition!.rounds[0]!.questions.map(q => q.text);
-        expect(new Set(questionsText).size).toEqual(questionsText.length);
     });
 
     it('will allow players to join the game', async () => {
@@ -46,7 +39,6 @@ describe('connection handling', () => {
         const activeClient = await Client.joinGameAsPlayer(secondSocket, {
             playerName: 'new-player',
             gameCode: host.game!.code,
-            observer: false,
         });
 
         if (!activeClient.game || !host.game || !activeClient.player || !host.player) {
@@ -57,7 +49,6 @@ describe('connection handling', () => {
         expect(activeClient.otherPlayers).toHaveLength(1);
         expect(activeClient.otherPlayers[0].id).toEqual(host.player.id);
         expect(activeClient.player.name).toEqual('new-player');
-        expect(activeClient.player.type).toEqual('ACTIVE_PLAYER');
 
         expect(host.otherPlayers).toHaveLength(1);
         expect(host.otherPlayers[0]!.id).toEqual(activeClient.player.id);
@@ -72,7 +63,6 @@ describe('connection handling', () => {
         const activePlayerClient = await Client.joinGameAsPlayer(secondSocket, {
             playerName: 'i-will-leave',
             gameCode: host.game!.code,
-            observer: false,
         });
 
         host.onPlayerLeft((player: any) => {
@@ -82,6 +72,35 @@ describe('connection handling', () => {
         });
 
         secondSocket.disconnect();
+    });
+
+    it('will limit the number of players to 12', async () => {
+        const host = await Client.createAsHost(socket);
+        const players = [];
+
+        let i = 0;
+        while (i++ < 12) {
+            const newPlayerSocket = createClientSocket();
+            const newPlayer = await Client.joinGameAsPlayer(newPlayerSocket, {
+                playerName: `player ${i}`,
+                gameCode: host.game!.code,
+            });
+            toDisconnect.push(newPlayerSocket);
+            players.push(newPlayer);
+        }
+
+        try {
+            const newPlayerSocket = createClientSocket();
+            toDisconnect.push(newPlayerSocket);
+            await Client.joinGameAsPlayer(newPlayerSocket, {
+                playerName: 'one player too many',
+                gameCode: host.game!.code,
+            });
+            // should never be here, should throw
+            expect(true).toBe(false);
+        } catch (exception) {
+            expect(exception).toMatchSnapshot();
+        }
     });
 
 });

@@ -2,6 +2,7 @@ import { Socket, Server } from 'socket.io';
 import { logger } from './logger';
 import { createGame, joinGame, disconnectPlayer } from './controllers/game-controller';
 import { TopLevelClientToServerMessages, TopLevelServerToSingleClientMessages } from './models/messages/top-level';
+import { validationErrorName } from './controllers/validation-error';
 
 type SocketHandler = (...args: any[]) => void;
 
@@ -12,7 +13,7 @@ export const handle = (socket: Socket, server: Server): void => {
         await createGame(socket, server);
     }));
     socket.on(TopLevelClientToServerMessages.JOIN_GAME, handleError(socket, async (...args: any[]) => {
-        await joinGame(socket, server, ...args);
+        await joinGame(socket, server, args[0]);
     }));
     socket.on('disconnect', handleError(socket, async () => {
         await disconnectPlayer(socket, server);
@@ -24,7 +25,7 @@ export const handleError = (socket: Socket, handler: SocketHandler): SocketHandl
         try {
             await handler(...args);
         } catch (error) {
-            if (error && error.name === 'ValidationError') {
+            if (error && error.name === validationErrorName) {
                  socket.emit(TopLevelServerToSingleClientMessages.VALIDATION_ERROR, error.message);
                  return;
             }

@@ -4,12 +4,10 @@ import { BroadcastGameMessages, SingleClientGameMessages } from '../models/messa
 import { Game } from '../models/entities/game';
 import { Player } from '../models/entities/player';
 import { retryWithErrorHandling } from '../utils/error-handling';
-import { GameDefinition } from '../models/entities/gameDefinition';
 
 export const createGame = async (socket: Socket, server: Server): Promise<void> => {
     logger.info('creating game for socket', socket.id);
-    const gameDefinition = await GameDefinition.generate();
-    const game = await Game.generateHost(gameDefinition);
+    const game = await Game.generateHost();
     const player = await Player.generateHostPlayer(game, socket.id);
 
     await game.addPlayer(player);
@@ -18,18 +16,16 @@ export const createGame = async (socket: Socket, server: Server): Promise<void> 
     server.to(game.id).emit(BroadcastGameMessages.CREATED, {
         player,
         game,
-        gameDefinition,
     });
 };
 
-export interface JoinGameOptions { gameCode?: string; playerName?: string; observer?: boolean; }
-export const joinGame = async (socket: Socket, server: Server, jointArgs: JoinGameOptions = {}) => {
-    const { gameCode, playerName, observer }: JoinGameOptions = jointArgs;
+export interface JoinGameOptions { gameCode: string; playerName: string; }
+export const joinGame = async (socket: Socket, server: Server, jointArgs: JoinGameOptions) => {
+    const { gameCode, playerName }: JoinGameOptions = jointArgs;
     logger.info('joining game', gameCode, playerName, socket.id);
 
     const game = await Game.findByCode(gameCode);
-    const player = await Player.generatePlayer(game, playerName, socket.id, observer);
-    const gameDefinition = GameDefinition.findByGame(game);
+    const player = await Player.generatePlayer(game, playerName, socket.id);
     const otherPlayers = await Player.findAllByGame(game);
 
     await game.addPlayer(player);
@@ -37,7 +33,7 @@ export const joinGame = async (socket: Socket, server: Server, jointArgs: JoinGa
     const responseBody = { player, game };
     socket.join(game.id);
     server.to(game.id).emit(BroadcastGameMessages.PLAYER_JOINED, responseBody);
-    socket.emit(SingleClientGameMessages.JOIN_SUCCESSFUL, { otherPlayers, gameDefinition,  ...responseBody });
+    socket.emit(SingleClientGameMessages.JOIN_SUCCESSFUL, { otherPlayers,  ...responseBody });
 };
 
 export const disconnectPlayer = async (socket: Socket, server: Server) => {
@@ -54,7 +50,7 @@ export const disconnectPlayer = async (socket: Socket, server: Server) => {
             await existingGame.removePlayer(player);
         }
         return existingGame;
-    }, 2);
+    }, 20);
 
     server.to(player.game.toHexString()).emit(BroadcastGameMessages.PLAYER_DISCONNECTED, {
         player,

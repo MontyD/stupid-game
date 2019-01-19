@@ -1,7 +1,7 @@
 import { InstanceType, Typegoose, arrayProp, Ref, staticMethod, ModelType } from 'typegoose';
 import { TypeOfQuestion, QuestionType, Question } from './question';
 import { GameType } from './game';
-import { ValidationError } from 'mongoose';
+import { ValidationError } from '../../controllers/validation-error';
 
 export interface GameDefinitionDTO {
     id: string;

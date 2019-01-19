@@ -1,11 +1,11 @@
 import { TopLevelClientToServerMessages, TopLevelServerToSingleClientMessages } from "../models/messages/top-level";
 import { ObjectOfAny } from '../utils/types';
 import { BroadcastGameMessages, SingleClientGameMessages } from '../models/messages/game';
-import { ValidationError } from './validation-error';
 import { JoinGameOptions } from "../controllers/game-controller";
 import { PlayerDTO } from "../models/entities/player";
 import { GameDTO } from "../models/entities/game";
 import { GameDefinitionDTO } from "../models/entities/gameDefinition";
+import { ValidationError } from "../controllers/validation-error";
 
 export type RequestCommands = TopLevelServerToSingleClientMessages | BroadcastGameMessages | SingleClientGameMessages;
 
@@ -90,7 +90,7 @@ export class Client {
         ]);
 
         if (result.validationError) {
-            throw new ValidationError(result.validationError as string, command);
+            throw new ValidationError(result.validationError as string);
         }
         if (result.failure) {
             throw new Error(result.failure as string);
