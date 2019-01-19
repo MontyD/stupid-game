@@ -1,4 +1,17 @@
-import { prop, InstanceType, Typegoose } from 'typegoose';
+import { prop, InstanceType, Typegoose, staticMethod, ModelType } from 'typegoose';
+
+export interface QuestionDTO {
+    id: string;
+    text: string;
+    answer: string;
+    answerType: AnswerType;
+    type: TypeOfQuestion;
+    level: QuestionLevel;
+    numberOfPointsForWinner: number;
+    numberOfPointsForGuesser: number;
+    numberOfPointsForTrapper: number;
+    winnerText: string;
+}
 
 export enum TypeOfQuestion {
     PERSONAL = 'PERSONAL',
@@ -21,6 +34,15 @@ export enum AnswerType {
 }
 
 export class QuestionEntity extends Typegoose {
+
+    @staticMethod
+    public static findRandomForType(
+        this: ModelType<QuestionEntity> & typeof QuestionEntity,
+        type: TypeOfQuestion,
+        limit: number
+    ): Promise<QuestionType[]> {
+        return Question.aggregate([]).match({ type }).sample(limit).exec();
+    }
 
     @prop({ required: true })
     public text!: string;

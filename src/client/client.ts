@@ -2,13 +2,14 @@ import { TopLevelClientToServerMessages, TopLevelServerToSingleClientMessages } 
 import { ObjectOfAny } from '../utils/types';
 import { BroadcastGameMessages, SingleClientGameMessages } from '../models/messages/game';
 import { ValidationError } from './validation-error';
-import { Game } from './game';
-import { Player } from './player';
 import { JoinGameOptions } from "../controllers/game-controller";
+import { PlayerDTO } from "../models/entities/player";
+import { GameDTO } from "../models/entities/game";
+import { GameDefinitionDTO } from "../models/entities/gameDefinition";
 
 export type RequestCommands = TopLevelServerToSingleClientMessages | BroadcastGameMessages | SingleClientGameMessages;
 
-type PlayerHandler = (player: Player) => void;
+type PlayerHandler = (player: PlayerDTO) => void;
 
 export class Client {
 
@@ -20,9 +21,10 @@ export class Client {
         return (new Client(socket)).joinGameAsPlayer(options);
     }
 
-    public game?: Game;
-    public player?: Player;
-    public otherPlayers: Player[] = [];
+    public game?: GameDTO;
+    public gameDefinition?: GameDefinitionDTO;
+    public player?: PlayerDTO;
+    public otherPlayers: PlayerDTO[] = [];
 
     private playerJoinedHandlers: PlayerHandler[] = [];
     private playerLeftHandlers: PlayerHandler[] = [];
@@ -44,9 +46,10 @@ export class Client {
     private async requestGameAsHost(): Promise<this> {
         this.socket.emit(TopLevelClientToServerMessages.CREATE_GAME);
 
-        const response = await this.takeNext(BroadcastGameMessages.CREATED);
-        this.game = Game.from(response.game);
-        this.player = Player.from(response.player);
+        const { game, player, gameDefinition } = await this.takeNext(BroadcastGameMessages.CREATED);
+        this.game = game;
+        this.player = player;
+        this.gameDefinition = gameDefinition;
         this.setupHandlers();
         return this;
     }
@@ -54,25 +57,24 @@ export class Client {
     private async joinGameAsPlayer(options: JoinGameOptions): Promise<this> {
         this.socket.emit(TopLevelClientToServerMessages.JOIN_GAME, options);
 
-        const response = await this.takeNext(SingleClientGameMessages.JOIN_SUCCESSFUL);
-        this.game = Game.from(response.game);
-        this.player = Player.from(response.player);
-        this.otherPlayers = response.otherPlayers.map(
-            (playerEntity: ObjectOfAny) => Player.from(playerEntity)
-        );
+        const {
+             game, player, gameDefinition, otherPlayers,
+        } = await this.takeNext(SingleClientGameMessages.JOIN_SUCCESSFUL);
+        this.game = game;
+        this.player = player;
+        this.gameDefinition = gameDefinition;
+        this.otherPlayers = otherPlayers;
         this.setupHandlers();
         return this;
     }
 
-    private handlePlayerJoined({ game, player }: { game: ObjectOfAny, player: ObjectOfAny }): void {
-        const parsedPlayer = Player.from(player);
-        this.game = Game.from(game);
-        this.otherPlayers.push(parsedPlayer);
-        this.playerJoinedHandlers.forEach(handler => handler(parsedPlayer));
+    private handlePlayerJoined({ game, player }: { game: GameDTO, player: PlayerDTO }): void {
+        this.game = game;
+        this.otherPlayers.push(player);
+        this.playerJoinedHandlers.forEach(handler => handler(player));
     }
 
-    private handlePlayerLeft({ player }: { player: ObjectOfAny}): void {
-        const gonePlayer = Player.from(player);
+    private handlePlayerLeft({ player: gonePlayer }: { player: PlayerDTO}): void {
         this.otherPlayers = this.otherPlayers.filter(existingPlayer => existingPlayer.id !== gonePlayer.id);
         this.playerLeftHandlers.forEach(handler => handler(gonePlayer));
     }

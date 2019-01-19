@@ -1,16 +1,20 @@
 import { prop, arrayProp, instanceMethod, staticMethod, InstanceType, Typegoose, ModelType  } from 'typegoose';
 import { PlayerEntity, PlayerType } from './player';
-import { dtoParser } from '../../utils/parser';
 import { ObjectId } from 'mongodb';
-import { ObjectOfAny } from '../../utils/types';
 import { randomString } from '../../utils/random';
-import { GameDefinitionEntity } from './gameDefinition';
+import { GameDefinitionEntity, GameDefinitionType } from './gameDefinition';
+
+export interface GameDTO {
+    id: string;
+    code: string;
+    runState: GameRunState;
+    currentRoundIndex: number;
+    currentQuestionIndex: number;
+}
 
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 10;
 export const MAX_OBSERVERS = 10;
-
-const dtoProps: ReadonlyArray<(keyof GameType)> = ['code', 'runState', 'players', 'id'];
 
 export enum GameRunState {
     WAITING_FOR_PLAYERS_TO_JOIN = 'WAITING_FOR_PLAYERS_TO_JOIN',
@@ -25,13 +29,23 @@ export const validateGameCode = (code: string) => Boolean(code && code.length ==
 export class GameEntity extends Typegoose {
 
     @staticMethod
-    public static findByCode(this: ModelType<GameEntity> & typeof GameEntity, code: string) {
-        return this.findOne({ code });
+    public static async findByCode(
+        this: ModelType<GameEntity> & typeof GameEntity,
+        code: string = ''
+    ): Promise<GameType> {
+        const game = await this.findOne({ code });
+        if (!game) {
+            throw new Error(`Cannot find game by code ${code}`);
+        }
+        return game;
     }
 
     @staticMethod
-    public static async generateHost(this: ModelType<GameEntity> & typeof GameEntity): Promise<GameType> {
-        return (new Game({ code: randomString() })).save();
+    public static async generateHost(
+        this: ModelType<GameEntity> & typeof GameEntity,
+        gameDefinition: GameDefinitionType
+    ): Promise<GameType> {
+        return (new Game({ code: randomString(), gameDefinition: gameDefinition._id })).save();
     }
 
     @prop({ required: true, unique: true, validate: validateGameCode })
@@ -51,11 +65,6 @@ export class GameEntity extends Typegoose {
 
     @prop({ required: true, ref: GameDefinitionEntity })
     public gameDefinition!: ObjectId;
-
-    @instanceMethod
-    public toDTO(this: InstanceType<GameEntity>): ObjectOfAny {
-        return dtoParser(this, dtoProps);
-    }
 
     @instanceMethod
     public addPlayer(this: InstanceType<GameEntity>, player: PlayerType): Promise<InstanceType<GameEntity>> {

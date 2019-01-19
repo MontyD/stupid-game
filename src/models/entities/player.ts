@@ -1,10 +1,13 @@
-import { prop, InstanceType, Typegoose, instanceMethod, staticMethod, ModelType } from 'typegoose';
+import { prop, InstanceType, Typegoose, staticMethod, ModelType } from 'typegoose';
 import { GameEntity, GameType } from './game';
-import { dtoParser } from '../../utils/parser';
 import { ObjectId } from 'mongodb';
-import { ObjectOfAny } from '../../utils/types';
 
-const dtoProps: ReadonlyArray<(keyof PlayerType)> = ['name', 'type', 'isHost', 'game', 'id'];
+export interface PlayerDTO {
+    id: string;
+    name: string;
+    type: TypeOfPlayer;
+    isHost: boolean;
+}
 
 export enum TypeOfPlayer {
     ACTIVE_PLAYER = 'ACTIVE_PLAYER',
@@ -33,7 +36,7 @@ export class PlayerEntity extends Typegoose {
     public static generatePlayer(
         this: ModelType<PlayerEntity> & typeof PlayerEntity,
         game: GameType,
-        name: string,
+        name: string = '',
         socketId: string,
         observer: boolean = false
     ): Promise<PlayerType> {
@@ -75,11 +78,6 @@ export class PlayerEntity extends Typegoose {
 
     @prop({ required: true, unique: true })
     public socketId!: string;
-
-    @instanceMethod
-    public toDTO(this: InstanceType<PlayerEntity>): ObjectOfAny {
-        return dtoParser(this, dtoProps);
-    }
 }
 
 export type PlayerType = InstanceType<PlayerEntity>;

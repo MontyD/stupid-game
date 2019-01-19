@@ -18,7 +18,7 @@ describe('connection handling', () => {
     });
 
     it('will create a game', async () => {
-        const {game, player, otherPlayers} = await Client.createAsHost(socket);
+        const {game, player, otherPlayers, gameDefinition} = await Client.createAsHost(socket);
         expect(game!.code.length).toEqual(5);
         expect(game!.runState).toEqual('WAITING_FOR_PLAYERS_TO_JOIN');
         expect(player).not.toBeUndefined();
@@ -26,6 +26,12 @@ describe('connection handling', () => {
         expect(player!.isHost).toBe(true);
         expect(player!.type).toEqual('OBSERVER');
         expect(otherPlayers).toHaveLength(0);
+        expect(gameDefinition!.rounds).toHaveLength(1);
+        expect(gameDefinition!.rounds[0]!.questions).toHaveLength(5);
+
+        // check questions are unique
+        const questionText = gameDefinition!.rounds[0]!.questions.map(q => q.text);
+        expect(new Set(questionText).size).toEqual(questionText.length);
     });
 
     it('will allow players to join the game', async () => {
@@ -76,7 +82,6 @@ describe('connection handling', () => {
         });
 
         secondSocket.disconnect();
-
     });
 
 });
