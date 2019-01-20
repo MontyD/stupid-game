@@ -121,9 +121,9 @@ describe('game setup', () => {
 
         await host.startGame();
 
-        expect((async () => {
+        await expect((async () => {
             await host.startGame();
-        })()).rejects.toThrowErrorMatchingSnapshot();
+        })()).rejects.toMatchSnapshot();
     });
 
 });
