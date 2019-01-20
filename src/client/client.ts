@@ -118,7 +118,7 @@ export class Client {
         return result.success as ObjectOfAny;
     }
 
-    private handlerToKeyedPromise<T>(keyName: string, eventName: string): Promise<{ [key: string]: T }> {
+    private handlerToKeyedPromise<T>(keyName: string, eventName: string): Promise<{ [keyof: string]: T }> {
         return new Promise((resolve) => this.socket.once(eventName, (arg: any) => resolve({ [keyName]: arg })));
     }
 

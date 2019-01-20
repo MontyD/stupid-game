@@ -52,7 +52,7 @@ export const startGame = async (server: Server, socket: Socket, gameId: string) 
     await game.start();
 
     const gameDefinition = await GameDefinition.generate(game);
-    server.send(BroadcastGameMessages.STARTED, { gameDefinition });
+    server.to(game.id).emit(BroadcastGameMessages.STARTED, { gameDefinition });
 };
 
 // TODO handle disconnect during game

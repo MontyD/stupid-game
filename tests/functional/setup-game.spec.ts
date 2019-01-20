@@ -108,7 +108,7 @@ describe('game setup', () => {
         }
     });
 
-    fit('will not start the same game twice', async () => {
+    it('will not start the same game twice', async () => {
         const host = await Client.createAsHost(createSocket());
 
         let i = 0;
@@ -120,7 +120,10 @@ describe('game setup', () => {
         }
 
         await host.startGame();
-        await host.startGame();
+
+        expect((async () => {
+            await host.startGame();
+        })()).rejects.toThrowErrorMatchingSnapshot();
     });
 
 });
