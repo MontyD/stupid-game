@@ -138,12 +138,33 @@ describe('game setup', () => {
             throw new Error('Game definition was not created');
         }
 
+        expect(host.game!.runState).toEqual('RUNNING_ROUND');
         expect(gameDefinition.rounds).toHaveLength(1);
         expect(gameDefinition.rounds[0].questions).toHaveLength(host.otherPlayers.length);
 
         // assert that all questions are unique
         const questionsText = gameDefinition.rounds[0].questions.map(question => question.text);
         expect(new Set(questionsText).size).toEqual(questionsText.length);
+    });
+
+    it('will not leak messages between games', async () => {
+        const [host1, host2] = await Promise.all([
+            setupGameForStart(),
+            setupGameForStart(),
+        ]);
+
+        expect(host1.otherPlayers).not.toContainEqual(host2.otherPlayers);
+
+        await host1.startGame();
+        expect(host1.game!.runState).toEqual('RUNNING_ROUND');
+        expect(host2.game!.runState).not.toEqual('RUNNING_ROUND');
+
+        await host2.startGame();
+
+        const questionTextForGame1 = host1.gameDefinition!.rounds[0].questions.map(question => question.text);
+        const questionTextForGame2 = host2.gameDefinition!.rounds[0].questions.map(question => question.text);
+
+        expect(questionTextForGame1).not.toEqual(questionTextForGame2);
     });
 
 });
