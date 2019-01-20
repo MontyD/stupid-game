@@ -10,7 +10,7 @@ export interface GameDefinitionDTO {
 
 const DEFAULT_ROUNDS = [TypeOfQuestion.DRAW];
 
-class Round {
+export class Round {
     constructor(public type: TypeOfQuestion, public questions: QuestionType[] = []) { }
 }
 

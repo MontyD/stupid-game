@@ -6,6 +6,7 @@ import { Player } from '../models/entities/player';
 import { retryWithErrorHandling } from '../utils/error-handling';
 import { handleError } from '../router';
 import { GameDefinition } from '../models/entities/game-definition';
+import { getRoundControllerFor } from './round-controllers';
 
 const attachListenersAndJoinGame = (server: Server, socket: Socket, gameId: string) => {
     socket.join(gameId);
@@ -52,7 +53,11 @@ export const startGame = async (server: Server, socket: Socket, gameId: string) 
     await game.start();
 
     const gameDefinition = await GameDefinition.generate(game);
-    server.to(game.id).emit(BroadcastGameMessages.STARTED, { gameDefinition });
+
+    const roundController = getRoundControllerFor(gameDefinition.rounds[0], server, gameId);
+
+    server.to(gameId).emit(BroadcastGameMessages.STARTED, { gameDefinition });
+    await roundController.start();
 };
 
 // TODO handle disconnect during game
