@@ -1,12 +1,12 @@
 import { Socket, Server } from 'socket.io';
 import { logger } from '../logger';
 import { BroadcastGameMessages, SingleClientGameMessages, ClientToServerGameMessages } from '../models/messages/game';
-import { Game } from '../models/entities/game';
+import { Game, MIN_PLAYERS } from '../models/entities/game';
 import { Player } from '../models/entities/player';
 import { retryWithErrorHandling } from '../utils/error-handling';
 import { handleError } from '../router';
 import { GameDefinition } from '../models/entities/game-definition';
-import { getRoundControllerFor } from './round-controllers';
+import { getRoundControllerFor, getRoundControllerForGame, deleteRoundControllerForGame } from './round-controllers';
 
 const attachListenersAndJoinGame = (server: Server, socket: Socket, gameId: string) => {
     socket.join(gameId);
@@ -55,12 +55,11 @@ export const startGame = async (server: Server, socket: Socket, gameId: string) 
     const gameDefinition = await GameDefinition.generate(game);
     const players = await Player.findAllByGame(game);
     const roundController = getRoundControllerFor(gameDefinition.rounds[0], server, players, gameId);
-
     server.to(gameId).emit(BroadcastGameMessages.STARTED, { gameDefinition });
     roundController.start();
 };
 
-// TODO handle disconnect during game
+// TODO handle host disconnect
 export const disconnectPlayer = async (socket: Socket, server: Server) => {
     logger.info('Disconnecting socket', socket.id);
     const player = await Player.findBySocketId(socket.id);
@@ -76,6 +75,17 @@ export const disconnectPlayer = async (socket: Socket, server: Server) => {
         }
         return existingGame;
     }, 20);
+
+    if (game) {
+        const roundController = getRoundControllerForGame(game.id);
+        if (roundController) {
+            roundController.removePlayer(player);
+            if (game.numberOfActivePlayers < MIN_PLAYERS) {
+                roundController.destroy();
+                deleteRoundControllerForGame(game.id);
+            }
+        }
+    }
 
     server.to(player.game.toHexString()).emit(BroadcastGameMessages.PLAYER_DISCONNECTED, {
         player,
