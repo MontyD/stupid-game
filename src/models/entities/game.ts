@@ -13,6 +13,7 @@ export interface GameDTO {
     currentRoundIndex: number;
     currentQuestionIndex: number;
     players: string[];
+    numberOfActivePlayers: number;
 }
 
 export const MIN_PLAYERS = 3;
@@ -78,13 +79,18 @@ export class GameEntity extends Typegoose {
     @prop({ ref: GameDefinitionEntity })
     public gameDefinition?: ObjectId;
 
+    @prop()
+    get numberOfActivePlayers() {
+        // Don't count the host in the amount of players
+        return this.players.length - 1;
+    }
+
     @instanceMethod
     public addPlayer(this: InstanceType<GameEntity>, player: PlayerType): Promise<InstanceType<GameEntity>> {
         if (this.runState !== GameRunState.WAITING_FOR_PLAYERS_TO_JOIN) {
             throw new ValidationError('Cannot add player while game is in progress');
         }
-        // number of players (minus the host) must be less than MAX_PLAYERS
-        if ((this.players.length - 1) === MAX_PLAYERS) {
+        if (this.numberOfActivePlayers === MAX_PLAYERS) {
             throw new ValidationError('Game is full');
         }
         this.players.push(player._id);
@@ -103,7 +109,6 @@ export class GameEntity extends Typegoose {
         this.runState = GameRunState.RUNNING_ROUND;
         return this.save();
     }
-
 }
 
 export type GameType = InstanceType<GameEntity>;

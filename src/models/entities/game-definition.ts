@@ -23,7 +23,7 @@ export class GameDefinitionEntity extends Typegoose {
     ): Promise<GameDefinitionType> {
         const rounds: Round[] = [];
         for (const questionType of DEFAULT_ROUNDS) {
-            const questions = await Question.findRandomForType(questionType, game.players.length);
+            const questions = await Question.findRandomForType(questionType, game.numberOfActivePlayers);
             rounds.push(new Round(questionType, questions));
         }
         const gameDef = new GameDefinition({ rounds });

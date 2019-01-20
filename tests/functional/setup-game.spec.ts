@@ -12,6 +12,18 @@ describe('game setup', () => {
         return newSocket;
     };
 
+    const setupGameForStart = async () => {
+        const host = await Client.createAsHost(createSocket());
+        let i = 0;
+        while (i++ < 3) {
+            await Client.joinGameAsPlayer(createSocket(), {
+                playerName: `player ${i}`,
+                gameCode: host.game!.code,
+            });
+        }
+        return host;
+    };
+
     afterEach(() => {
         toDisconnect.forEach(io => io.disconnect());
         toDisconnect = [];
@@ -109,21 +121,29 @@ describe('game setup', () => {
     });
 
     it('will not start the same game twice', async () => {
-        const host = await Client.createAsHost(createSocket());
-
-        let i = 0;
-        while (i++ < 3) {
-            await Client.joinGameAsPlayer(createSocket(), {
-                playerName: `player ${i}`,
-                gameCode: host.game!.code,
-            });
-        }
-
+        const host = await setupGameForStart();
         await host.startGame();
 
         await expect((async () => {
             await host.startGame();
         })()).rejects.toMatchSnapshot();
+    });
+
+    it('will create a correct game definition on start', async () => {
+        const host = await setupGameForStart();
+        await host.startGame();
+
+        const { gameDefinition } = host;
+        if (!gameDefinition) {
+            throw new Error('Game definition was not created');
+        }
+
+        expect(gameDefinition.rounds).toHaveLength(1);
+        expect(gameDefinition.rounds[0].questions).toHaveLength(host.otherPlayers.length);
+
+        // assert that all questions are unique
+        const questionsText = gameDefinition.rounds[0].questions.map(question => question.text);
+        expect(new Set(questionsText).size).toEqual(questionsText.length);
     });
 
 });
