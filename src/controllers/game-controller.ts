@@ -77,14 +77,16 @@ export const disconnectPlayer = async (socket: Socket, server: Server) => {
     }, 20);
 
     if (game) {
+        const gameShouldClose = game.numberOfActivePlayers < MIN_PLAYERS;
         const roundController = getRoundControllerForGame(game.id);
         if (roundController) {
             roundController.removePlayer(player);
-            if (game.numberOfActivePlayers < MIN_PLAYERS) {
+            if (gameShouldClose) {
                 roundController.destroy();
                 deleteRoundControllerForGame(game.id);
             }
         }
+        server.to(game.id).emit(BroadcastGameMessages.ABORTED);
     }
 
     server.to(player.game.toHexString()).emit(BroadcastGameMessages.PLAYER_DISCONNECTED, {
