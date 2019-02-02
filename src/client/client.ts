@@ -6,8 +6,12 @@ import { PlayerDTO } from "../models/entities/player";
 import { GameDTO, GameRunState } from "../models/entities/game";
 import { GameDefinitionDTO } from "../models/entities/game-definition";
 import { ValidationError } from "../controllers/validation-error";
+import { BroadcastRoundMessages, ClientToServerRoundMessages } from "../models/messages/round";
 
-export type RequestCommands = TopLevelServerToSingleClientMessages | BroadcastGameMessages | SingleClientGameMessages;
+export type RequestCommands = TopLevelServerToSingleClientMessages |
+                                BroadcastGameMessages |
+                                SingleClientGameMessages |
+                                BroadcastRoundMessages;
 
 type PlayerHandler = (player: PlayerDTO) => void;
 type GameDefinitionHandler = (gameDefinition: GameDefinitionDTO) => void;
@@ -36,6 +40,12 @@ export class Client {
     public async startGame() {
         this.socket.emit(ClientToServerGameMessages.START);
         await this.takeNext(BroadcastGameMessages.STARTED);
+        await this.takeNext(BroadcastRoundMessages.STARTED);
+    }
+
+    public async instructionsComplete() {
+        this.socket.emit(ClientToServerRoundMessages.READY_TO_TAKE_PROMPT);
+        await this.takeNext(BroadcastRoundMessages.PROMPT);
     }
 
     public onPlayerJoined(handler: PlayerHandler) {

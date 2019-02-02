@@ -7,6 +7,7 @@ import { retryWithErrorHandling } from '../utils/error-handling';
 import { handleError } from '../router';
 import { GameDefinition } from '../models/entities/game-definition';
 import { getRoundControllerFor, getRoundControllerForGame, deleteRoundControllerForGame } from './round-controllers';
+import { pause } from '../utils/async';
 
 const attachListenersAndJoinGame = (server: Server, socket: Socket, gameId: string) => {
     socket.join(gameId);
@@ -54,8 +55,10 @@ export const startGame = async (server: Server, socket: Socket, gameId: string) 
 
     const gameDefinition = await GameDefinition.generate(game);
     const players = await Player.findAllByGame(game);
-    const roundController = getRoundControllerFor(gameDefinition.rounds[0], server, players, gameId);
+    const roundController = getRoundControllerFor(gameDefinition.rounds[0], server, players, game);
     server.to(gameId).emit(BroadcastGameMessages.STARTED, { gameDefinition });
+
+    await pause(500);
     roundController.start();
 };
 

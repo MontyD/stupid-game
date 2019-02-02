@@ -161,7 +161,7 @@ describe('game setup', () => {
 
         await host2.startGame();
 
-        // TODO reinstaet
+        // TODO reinstate
         // const questionTextForGame1 = host1.gameDefinition!.rounds[0].questions.map(question => question.text);
         // const questionTextForGame2 = host2.gameDefinition!.rounds[0].questions.map(question => question.text);
 

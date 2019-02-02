@@ -35,6 +35,7 @@ describe('draw round', () => {
     it('will wait for instructions to progress', async () => {
         await setupGame();
         await currentClients[0].startGame();
+        await currentClients[0].instructionsComplete();
     });
 
 });

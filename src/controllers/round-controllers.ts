@@ -5,6 +5,7 @@ import { Server } from 'socket.io';
 import { DrawRoundController } from './draw-round-controller';
 import { RoundController } from './round-controller';
 import { PlayerType } from '../models/entities/player';
+import { GameType } from '../models/entities/game';
 
 const roundControllers: Map<string, RoundController> = new Map<string, RoundController>();
 
@@ -12,10 +13,10 @@ export const getRoundControllerFor = (
     round: Round,
     server: Server,
     players: PlayerType[],
-    gameId: string
+    game: GameType
 ): RoundController => {
     if (round.type === TypeOfQuestion.DRAW) {
-        return new DrawRoundController(round, server, players, gameId);
+        return new DrawRoundController(round, server, players, game);
     }
     throw new ValidationError(`Unsupported round type ${round.type}`);
 };

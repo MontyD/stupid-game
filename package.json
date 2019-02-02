@@ -12,7 +12,7 @@
     "watch:ts": "tsc --watch",
     "test": "npm run test:functional",
     "test:functional": "jest --config=tests/functional/jest.config.js",
-    "test:functional:watch": "jest --config=tests/functional/jest.config.js --watchAll"
+    "test:functional:watch": "jest --config=tests/functional/jest.config.js --watchAll --runInBand -t draw"
   },
   "keywords": [
     "socket",
