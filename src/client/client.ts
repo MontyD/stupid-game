@@ -67,10 +67,9 @@ export class Client {
     private async requestGameAsHost(): Promise<this> {
         this.socket.emit(TopLevelClientToServerMessages.CREATE_GAME);
 
-        const { game, player, gameDefinition } = await this.takeNext(BroadcastGameMessages.CREATED);
+        const { game, player } = await this.takeNext(BroadcastGameMessages.CREATED);
         this.game = game;
         this.player = player;
-        this.gameDefinition = gameDefinition;
         this.setupHandlers();
         return this;
     }
@@ -79,11 +78,10 @@ export class Client {
         this.socket.emit(TopLevelClientToServerMessages.JOIN_GAME, options);
 
         const {
-             game, player, gameDefinition, otherPlayers,
+             game, player, otherPlayers,
         } = await this.takeNext(SingleClientGameMessages.JOIN_SUCCESSFUL);
         this.game = game;
         this.player = player;
-        this.gameDefinition = gameDefinition;
         this.otherPlayers = otherPlayers;
         this.setupHandlers();
         return this;

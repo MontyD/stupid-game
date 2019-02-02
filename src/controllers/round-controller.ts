@@ -1,13 +1,18 @@
 import { Round } from "../models/entities/game-definition";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { ObjectOfAny } from "../utils/types";
 import { PlayerType } from "../models/entities/player";
 import { ClientToServerRoundMessages } from "../models/messages/round";
-import { GameType } from "../models/entities/game";
+import { GameType, Game } from "../models/entities/game";
+import { logger } from "../logger";
 
 export abstract class RoundController {
     protected finishListener?: () => void;
-    private unsubscribers: Array<[string, (...args: any[]) => void, (() => void)?]> = [];
+    private unsubscribers: Array<() => void> = [];
+
+    protected get sockets(): {[key: string]: Socket} {
+        return this.server.in(this.game.id).sockets || {};
+    }
 
     constructor(
         protected round: Round,
@@ -27,36 +32,40 @@ export abstract class RoundController {
     }
 
     public destroy(): void {
-        this.unsubscribers.forEach(([type, handler, optionalOnUnsubscribe]) => {
-            this.server.in(this.game.id).off(type, handler);
-            if (optionalOnUnsubscribe) {
-                optionalOnUnsubscribe();
-            }
-        });
+        this.unsubscribers.forEach(unsubscribe => unsubscribe());
     }
 
     protected send(messageType: string, args: ObjectOfAny = {}): void {
         this.server.to(this.game.id).emit(messageType, args);
     }
 
-    protected async waitForAll(messageType: ClientToServerRoundMessages): Promise<ObjectOfAny[]> {
-        return new Promise<ObjectOfAny[]>((resolve, reject) => {
-            const responses: ObjectOfAny[] = [];
-            const handler = (args: ObjectOfAny) => {
-                responses.push(args);
-                if (responses.length === this.players.length) {
-                    complete();
+    protected async waitForAll(
+        messageType: ClientToServerRoundMessages,
+        ignoreHost: boolean = false
+    ): Promise<Map<string, ObjectOfAny>> {
+        return new Promise<Map<string, ObjectOfAny>>((resolve, reject) => {
+            const amountOfResponses = ignoreHost ? this.game.numberOfActivePlayers : this.players.length;
+            const responses: Map<string, ObjectOfAny> = new Map();
+            this.unsubscribers.push(reject);
+
+            const attachHandler = (socketId: string, socket: Socket) => {
+                const player = this.players.find(p => p.socketId === socketId);
+                if (!player) {
+                    logger.warn(`Tried to add a listener for no player on socket id ${socketId}`);
+                    return;
                 }
+
+                socket.once(messageType, (args: ObjectOfAny) => {
+                    responses.set(player.id, args);
+                    if (responses.size === amountOfResponses) {
+                        resolve(responses);
+                    }
+                });
             };
-            const complete = () => {
-                this.unsubscribers = this.unsubscribers.filter(entry => (
-                    entry[0] !== messageType && entry[1] !== handler && entry[2] !== reject
-                ));
-                this.server.in(this.game.id).off(messageType, handler);
-                resolve();
-            };
-            this.unsubscribers.push([messageType, handler, reject]);
-            this.server.in(this.game.id).on(messageType, handler);
+
+            Object.keys(this.sockets).forEach(socketId => {
+                attachHandler(socketId, this.sockets[socketId]);
+            });
         });
     }
 }
