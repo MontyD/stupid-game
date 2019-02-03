@@ -51,15 +51,16 @@ export const startGame = async (server: Server, socket: Socket, gameId: string) 
     logger.info(`Starting game ${gameId}`);
 
     const game = await Game.get(gameId);
-    await game.start();
 
     const gameDefinition = await GameDefinition.generate(game);
     const players = await Player.findAllByGame(game);
+
+    await game.start(gameDefinition);
     const roundController = getRoundControllerFor(gameDefinition.rounds[0], server, players, game);
     server.to(gameId).emit(BroadcastGameMessages.STARTED, { gameDefinition });
 
     await pause(500);
-    roundController.start();
+    handleError(socket, roundController.start)();
 };
 
 // TODO handle host disconnect

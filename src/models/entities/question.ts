@@ -75,5 +75,11 @@ export class QuestionEntity extends Typegoose {
 
 export type QuestionType = InstanceType<QuestionEntity>;
 export const Question = new QuestionEntity().getModelForClass(QuestionEntity, {
-    schemaOptions: { collection: 'Questions' },
+    schemaOptions: {
+        collection: 'Questions',
+        toObject: {
+            virtuals: true,
+            versionKey: false,
+        },
+    },
 });

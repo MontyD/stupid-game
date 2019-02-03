@@ -72,4 +72,12 @@ export class PlayerEntity extends Typegoose {
 }
 
 export type PlayerType = InstanceType<PlayerEntity>;
-export const Player = new PlayerEntity().getModelForClass(PlayerEntity, { schemaOptions: { collection: 'Players' } });
+export const Player = new PlayerEntity().getModelForClass(PlayerEntity, {
+    schemaOptions: {
+        collection: 'Players',
+        toObject: {
+            virtuals: true,
+            versionKey: false,
+        },
+    },
+});

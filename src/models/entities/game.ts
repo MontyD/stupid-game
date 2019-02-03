@@ -2,7 +2,7 @@ import { prop, arrayProp, instanceMethod, staticMethod, InstanceType, Typegoose,
 import { PlayerEntity, PlayerType } from './player';
 import { ObjectId } from 'mongodb';
 import { randomString } from '../../utils/random';
-import { GameDefinitionEntity } from './game-definition';
+import { GameDefinitionEntity, GameDefinitionType } from './game-definition';
 import { ValidationError } from '../../controllers/validation-error';
 import { assertCanStart } from '../../functions/game-functions';
 
@@ -105,12 +105,24 @@ export class GameEntity extends Typegoose {
     }
 
     @instanceMethod
-    public start(this: InstanceType<GameEntity>): Promise<InstanceType<GameEntity>> {
+    public start(
+        this: InstanceType<GameEntity>,
+        gameDefinition: GameDefinitionType
+    ): Promise<InstanceType<GameEntity>> {
         assertCanStart(this);
+        this.gameDefinition = gameDefinition._id;
         this.runState = GameRunState.RUNNING_ROUND;
         return this.save();
     }
 }
 
 export type GameType = InstanceType<GameEntity>;
-export const Game = new GameEntity().getModelForClass(GameEntity, { schemaOptions: { collection: 'Games' } });
+export const Game = new GameEntity().getModelForClass(GameEntity, {
+    schemaOptions: {
+        collection: 'Games',
+        toObject: {
+            virtuals: true,
+            versionKey: false,
+        },
+    },
+});

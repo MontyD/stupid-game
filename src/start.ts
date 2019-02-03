@@ -11,9 +11,8 @@ const createServer = async () => {
         res.statusCode = 404;
         res.end();
     });
-    const ioServer = io(httpServer);
-    ioServer.sockets.setMaxListeners(0);  // Don't limit the amount of listeners
 
+    const ioServer = io(httpServer);
     ioServer.on('connection', (socket: io.Socket) => {
         handle(socket, ioServer);
     });

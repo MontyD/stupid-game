@@ -49,5 +49,11 @@ export class GameDefinitionEntity extends Typegoose {
 
 export type GameDefinitionType = InstanceType<GameDefinitionEntity>;
 export const GameDefinition = new GameDefinitionEntity().getModelForClass(GameDefinitionEntity, {
-    schemaOptions: { collection: 'GameDefinitions' },
+    schemaOptions: {
+        collection: 'GameDefinitions',
+        toObject: {
+            virtuals: true,
+            versionKey: false,
+        },
+    },
 });
