@@ -60,7 +60,7 @@ export const startGame = async (server: Server, socket: Socket, gameId: string) 
     server.to(gameId).emit(BroadcastGameMessages.STARTED, { gameDefinition });
 
     await pause(500);
-    handleError(socket, roundController.start)();
+    roundController.start();
 };
 
 // TODO handle host disconnect

@@ -1,6 +1,7 @@
 import 'jest';
 import { createClientSocket } from './util/create-connection';
 import { Client } from '../../src/client/client';
+import { pause } from '../../src/utils/async';
 
 describe('draw round', () => {
 
@@ -12,12 +13,6 @@ describe('draw round', () => {
         toDisconnect.push(newSocket);
         return newSocket;
     };
-
-    beforeEach(() => {
-        toDisconnect.forEach(socket => socket.disconnect());
-        toDisconnect = [];
-        currentClients = [];
-    });
 
     const setupGame = async (numberOfPlayers: number = 4) => {
         const host = await Client.createAsHost(createSocket());
@@ -32,10 +27,42 @@ describe('draw round', () => {
         }
     };
 
-    it('will wait for instructions to progress', async () => {
+    beforeEach(async () => {
+        toDisconnect.forEach(socket => socket.disconnect());
+        toDisconnect = [];
+        currentClients = [];
+
         await setupGame();
-        await currentClients[0].startGame();
-        await Promise.all(currentClients.map(client => client.instructionsComplete()));
+    });
+
+    it('will wait for instructions to progress and give unique prompts', async () => {
+        const hostClient = currentClients.find(client => !!(client.player && client.player.isHost));
+        const activePlayers = currentClients.filter(client => !!(client.player && !client.player.isHost));
+        const [firstClient, ...otherPlayerClients] = activePlayers;
+
+        await setupGame();
+        await firstClient.startGame();
+
+        // host should get null prompt
+        expect(await hostClient!.instructionsComplete()).toEqual(null);
+
+        const responses = await Promise.all([
+            (async () => {
+                await pause(1000);
+                return firstClient.instructionsComplete();
+            })(),
+            ...otherPlayerClients.map(client => client.instructionsComplete()),
+        ]);
+
+        const promptsText = responses.map(response => response && response.text);
+        expect(new Set(promptsText).size).toEqual(promptsText.length);
+        expect(promptsText).toHaveLength(activePlayers.length);
+
+        responses.forEach(prompt => {
+            expect(prompt).not.toBeNull();
+            expect(prompt!.type).toEqual('DRAW');
+            expect(prompt!.timeoutMs).toEqual(30000);
+        });
     });
 
 });

@@ -1,6 +1,9 @@
 export enum BroadcastRoundMessages {
     STARTED = 'ROUND:STARTED',
-    PROMPT = 'ROUND:PROMPT',
+}
+
+export enum SingleClientRoundMessages {
+    PROMPT = 'PROMPT',
 }
 
 export enum ClientToServerRoundMessages {

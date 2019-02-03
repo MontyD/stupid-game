@@ -4,11 +4,14 @@ import { ObjectOfAny } from "../utils/types";
 import { PlayerType } from "../models/entities/player";
 import { ClientToServerRoundMessages } from "../models/messages/round";
 import { GameType } from "../models/entities/game";
+import { logger } from "../logger";
+import { TopLevelServerToSingleClientMessages } from "../models/messages/top-level";
 
 export abstract class RoundController {
     protected readonly sockets: Map<string, Socket> = new Map();
 
     protected finishListener?: () => void;
+    protected readonly ALLOWED_LATENCY_MS: number = 5000;
     private unsubscribers: Array<() => void> = [];
 
     constructor(
@@ -17,7 +20,7 @@ export abstract class RoundController {
         protected players: PlayerType[],
         protected game: GameType
     ) {
-        this.start = this.start.bind(this);
+        this.start = this.handleRoundError(this.start);
 
         const sockets = this.server.sockets.sockets;
         Object.keys(sockets).forEach(socketId => {
@@ -26,7 +29,7 @@ export abstract class RoundController {
                 this.sockets.set(player.id, sockets[socketId]);
             }
         });
-     }
+    }
 
     public abstract start(): Promise<void>;
 
@@ -43,8 +46,21 @@ export abstract class RoundController {
         this.unsubscribers.forEach(unsubscribe => unsubscribe());
     }
 
-    protected send(messageType: string, args: ObjectOfAny = {}): void {
+    protected sendToAll(messageType: string, args: ObjectOfAny = {}): void {
         this.server.to(this.game.id).emit(messageType, args);
+    }
+
+    protected allActivePlayers(): PlayerType[] {
+        return this.players.filter(player => !player.isHost);
+    }
+
+    protected sendToPlayer(player: PlayerType, message: string, args: ObjectOfAny): boolean {
+        const socket = this.sockets.get(player.id);
+        if (socket) {
+            socket.emit(message, args);
+            return true;
+        }
+        return false;
     }
 
     protected async waitForAll(
@@ -67,5 +83,21 @@ export abstract class RoundController {
 
             Array.from(this.sockets.entries()).forEach(([playerId, socket]) => attachHandler(playerId, socket));
         });
+    }
+
+    protected handleRoundError(handler: () => Promise<void>): () => Promise<void> {
+        return async () => {
+            try {
+                await handler.apply(this);
+            } catch (error) {
+                logger.error(
+                    'Exception in round controller on game ${this.game.id}',
+                    this.game.id,
+                    error && error.toString(),
+                    error && error.stack
+                );
+                this.server.to(this.game.id).emit(TopLevelServerToSingleClientMessages.ERROR, 'Unhandled round error');
+            }
+        };
     }
 }

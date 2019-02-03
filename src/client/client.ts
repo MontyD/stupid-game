@@ -6,12 +6,18 @@ import { PlayerDTO } from "../models/entities/player";
 import { GameDTO, GameRunState } from "../models/entities/game";
 import { GameDefinitionDTO } from "../models/entities/game-definition";
 import { ValidationError } from "../controllers/validation-error";
-import { BroadcastRoundMessages, ClientToServerRoundMessages } from "../models/messages/round";
+import {
+    BroadcastRoundMessages,
+    ClientToServerRoundMessages,
+    SingleClientRoundMessages
+} from "../models/messages/round";
+import { Prompt, PromptType } from "../models/entities/prompt";
 
 export type RequestCommands = TopLevelServerToSingleClientMessages |
                                 BroadcastGameMessages |
                                 SingleClientGameMessages |
-                                BroadcastRoundMessages;
+                                BroadcastRoundMessages |
+                                SingleClientRoundMessages;
 
 type PlayerHandler = (player: PlayerDTO) => void;
 type GameDefinitionHandler = (gameDefinition: GameDefinitionDTO) => void;
@@ -43,9 +49,14 @@ export class Client {
         await this.takeNext(BroadcastRoundMessages.STARTED);
     }
 
-    public async instructionsComplete() {
+    public async instructionsComplete(): Promise<Prompt | null> {
         this.socket.emit(ClientToServerRoundMessages.READY_TO_TAKE_PROMPT);
-        await this.takeNext(BroadcastRoundMessages.PROMPT);
+        if (!this.player || this.player.isHost) {
+            return null;
+        }
+
+        const response = await this.takeNext(SingleClientRoundMessages.PROMPT);
+        return response as Prompt;
     }
 
     public onPlayerJoined(handler: PlayerHandler) {
