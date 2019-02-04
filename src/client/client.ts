@@ -121,7 +121,7 @@ export class Client {
         (this.eventHandlers.get(ClientEvent.GAME_STARTED) || []).forEach(handler => handler(gameDefinition));
     }
 
-    private handlePlayerResponse(res: { playerId: string, response: ObjectOfAny }): void {
+    private handlePlayerResponse(res: { playerId: string }): void {
         (this.eventHandlers.get(ClientEvent.PLAYER_RESPONSE) || []).forEach(handler => handler(res));
     }
 

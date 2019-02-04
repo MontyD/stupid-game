@@ -12,6 +12,7 @@ export abstract class RoundController {
 
     protected finishListener?: () => void;
     protected readonly ALLOWED_LATENCY_MS: number = 5000;
+    private currentTimeout?: NodeJS.Timeout;
     private unsubscribers: Array<() => void> = [];
 
     constructor(
@@ -43,6 +44,7 @@ export abstract class RoundController {
     }
 
     public destroy(): void {
+        this.clearCurrentTimeout();
         this.unsubscribers.forEach(unsubscribe => unsubscribe());
     }
 
@@ -66,7 +68,8 @@ export abstract class RoundController {
     protected async waitForAll(
         messageType: ClientToServerRoundMessages,
         ignoreHost: boolean = false,
-        singleResponseListener?: (playerId: string, response: ObjectOfAny) => void
+        singleResponseListener?: (playerId: string) => void,
+        timeout?: number
     ): Promise<Map<string, ObjectOfAny>> {
         return new Promise<Map<string, ObjectOfAny>>((resolve, reject) => {
             const responses: Map<string, ObjectOfAny> = new Map();
@@ -77,14 +80,18 @@ export abstract class RoundController {
                     const amountOfResponses = ignoreHost ? this.game.numberOfActivePlayers : this.players.length;
                     responses.set(playerId, args);
                     if (singleResponseListener) {
-                        singleResponseListener(playerId, args);
+                        singleResponseListener(playerId);
                     }
                     if (responses.size === amountOfResponses) {
+                        this.clearCurrentTimeout();
                         resolve(responses);
                     }
                 });
             };
 
+            if (timeout) {
+                this.setCurrentTimeout(() => resolve(responses), timeout);
+            }
             Array.from(this.sockets.entries()).forEach(([playerId, socket]) => attachHandler(playerId, socket));
         });
     }
@@ -103,5 +110,15 @@ export abstract class RoundController {
                 this.server.to(this.game.id).emit(TopLevelServerToSingleClientMessages.ERROR, 'Unhandled round error');
             }
         };
+    }
+
+    protected setCurrentTimeout(callback: (...args: any[]) => void, timeout: number) {
+        this.currentTimeout = setTimeout(callback, timeout);
+    }
+
+    protected clearCurrentTimeout() {
+        if (this.currentTimeout) {
+            clearTimeout(this.currentTimeout);
+        }
     }
 }

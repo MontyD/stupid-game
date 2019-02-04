@@ -50,7 +50,7 @@ describe('draw round', () => {
         await firstClient.startGame();
 
         // host should get null prompt
-        expect(await hostClient!.instructionsComplete()).toEqual(null);
+        expect(await hostClient.instructionsComplete()).toEqual(null);
 
         const responses = await Promise.all([
             (async () => {

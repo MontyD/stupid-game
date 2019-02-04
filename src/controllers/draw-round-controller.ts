@@ -6,7 +6,6 @@ import {
     SingleClientRoundMessages
 } from "../models/messages/round";
 import { Prompt, PromptType } from "../models/entities/prompt";
-import { pause } from "../utils/async";
 import { ObjectOfAny } from "../utils/types";
 
 export class DrawRoundController extends RoundController {
@@ -37,15 +36,20 @@ export class DrawRoundController extends RoundController {
             ));
         });
 
-        const onPlayerResponse = (playerId: string, response: ObjectOfAny) => {
-            this.sendToAll(BroadcastRoundMessages.PLAYER_RESPONSE, { playerId, response });
+        const onPlayerResponse = (playerId: string) => {
+            logger.info(`Got response for ${playerId}`);
+            this.sendToAll(BroadcastRoundMessages.PLAYER_RESPONSE, { playerId });
         };
 
-        await Promise.race([
-            pause(this.DRAW_TIME_MS + this.ALLOWED_LATENCY_MS),
-            this.waitForAll(ClientToServerRoundMessages.RESPONSE, true, onPlayerResponse),
-        ]);
+        const timeout = this.DRAW_TIME_MS + this.ALLOWED_LATENCY_MS;
+        const responses = await this.waitForAll(ClientToServerRoundMessages.RESPONSE, true, onPlayerResponse, timeout);
 
         this.sendToAll(BroadcastRoundMessages.PROMPT_COMPLETE);
+        this.handleRoundError(() => this.doHandleGuesses(responses));
+    }
+
+    private async doHandleGuesses(prompts: Map<string, ObjectOfAny>) {
+        // TODO
+        logger.log(prompts);
     }
 }
