@@ -7,6 +7,8 @@ describe('draw round', () => {
 
     let toDisconnect: SocketIOClient.Socket[] = [];
     let currentClients: Client[] = [];
+    let hostClient: Client;
+    let activePlayerClients: Client[];
 
     const createSocket = (): SocketIOClient.Socket => {
         const newSocket = createClientSocket();
@@ -25,6 +27,14 @@ describe('draw round', () => {
             });
             currentClients.push(player);
         }
+
+        hostClient = currentClients.find(client => !!(client.player && client.player.isHost))!;
+        activePlayerClients = currentClients.filter(client => !!(client.player && !client.player.isHost));
+    };
+
+    const progressToPrompts = async () => {
+        await hostClient.startGame();
+        await Promise.all(currentClients.map(client => client.instructionsComplete()));
     };
 
     beforeEach(async () => {
@@ -36,11 +46,7 @@ describe('draw round', () => {
     });
 
     it('will wait for instructions to progress and give unique prompts', async () => {
-        const hostClient = currentClients.find(client => !!(client.player && client.player.isHost));
-        const activePlayers = currentClients.filter(client => !!(client.player && !client.player.isHost));
-        const [firstClient, ...otherPlayerClients] = activePlayers;
-
-        await setupGame();
+        const [firstClient, ...otherPlayerClients] = activePlayerClients;
         await firstClient.startGame();
 
         // host should get null prompt
@@ -56,13 +62,17 @@ describe('draw round', () => {
 
         const promptsText = responses.map(response => response && response.text);
         expect(new Set(promptsText).size).toEqual(promptsText.length);
-        expect(promptsText).toHaveLength(activePlayers.length);
+        expect(promptsText).toHaveLength(activePlayerClients.length);
 
         responses.forEach(prompt => {
             expect(prompt).not.toBeNull();
             expect(prompt!.type).toEqual('DRAW');
             expect(prompt!.timeoutMs).toEqual(30000);
         });
+    });
+
+    it('will allow continue the round after prompts are completed', async () => {
+        await progressToPrompts();
     });
 
 });

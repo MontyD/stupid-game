@@ -1,5 +1,5 @@
 import { createClientSocket } from "./util/create-connection";
-import { Client } from '../../src/client/client';
+import { Client, ClientEvent } from '../../src/client/client';
 import 'jest';
 
 describe('game setup', () => {
@@ -43,7 +43,7 @@ describe('game setup', () => {
         const playerJoinedListener = jest.fn();
 
         const host = await Client.createAsHost(createSocket());
-        host.onPlayerJoined(playerJoinedListener);
+        host.on(ClientEvent.PLAYER_JOINED, playerJoinedListener);
         expect(host.otherPlayers).toEqual([]);
 
         const activeClient = await Client.joinGameAsPlayer(createSocket(), {
@@ -75,7 +75,7 @@ describe('game setup', () => {
             gameCode: host.game!.code,
         });
 
-        host.onPlayerLeft((player: any) => {
+        host.on(ClientEvent.PLAYER_LEFT, player => {
             expect(player.id).toEqual(activePlayerClient.player!.id);
             expect(host.otherPlayers).toEqual([]);
             done();

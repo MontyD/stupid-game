@@ -23,10 +23,10 @@ export abstract class RoundController {
         this.start = this.handleRoundError(this.start);
 
         const sockets = this.server.sockets.sockets;
-        Object.keys(sockets).forEach(socketId => {
-            const player = this.players.find(p => p.socketId === socketId);
-            if (player) {
-                this.sockets.set(player.id, sockets[socketId]);
+        this.players.forEach(player => {
+            const socket = sockets[player.socketId];
+            if (socket) {
+                this.sockets.set(player.id, socket);
             }
         });
     }
@@ -65,7 +65,8 @@ export abstract class RoundController {
 
     protected async waitForAll(
         messageType: ClientToServerRoundMessages,
-        ignoreHost: boolean = false
+        ignoreHost: boolean = false,
+        singleResponseListener?: (playerId: string, response: ObjectOfAny) => void
     ): Promise<Map<string, ObjectOfAny>> {
         return new Promise<Map<string, ObjectOfAny>>((resolve, reject) => {
             const responses: Map<string, ObjectOfAny> = new Map();
@@ -75,6 +76,9 @@ export abstract class RoundController {
                 socket.once(messageType, (args: ObjectOfAny) => {
                     const amountOfResponses = ignoreHost ? this.game.numberOfActivePlayers : this.players.length;
                     responses.set(playerId, args);
+                    if (singleResponseListener) {
+                        singleResponseListener(playerId, args);
+                    }
                     if (responses.size === amountOfResponses) {
                         resolve(responses);
                     }

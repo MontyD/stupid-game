@@ -7,6 +7,7 @@ import {
 } from "../models/messages/round";
 import { Prompt, PromptType } from "../models/entities/prompt";
 import { pause } from "../utils/async";
+import { ObjectOfAny } from "../utils/types";
 
 export class DrawRoundController extends RoundController {
 
@@ -20,7 +21,6 @@ export class DrawRoundController extends RoundController {
             type: DrawRoundController.TYPE,
         });
         await this.waitForAll(ClientToServerRoundMessages.READY_TO_TAKE_PROMPT);
-        await pause(50);
 
         this.handleRoundError(this.doDrawPrompts)();
     }
@@ -37,6 +37,15 @@ export class DrawRoundController extends RoundController {
             ));
         });
 
-        await pause(this.DRAW_TIME_MS + this.ALLOWED_LATENCY_MS);
+        const onPlayerResponse = (playerId: string, response: ObjectOfAny) => {
+            this.sendToAll(BroadcastRoundMessages.PLAYER_RESPONSE, { playerId, response });
+        };
+
+        await Promise.race([
+            pause(this.DRAW_TIME_MS + this.ALLOWED_LATENCY_MS),
+            this.waitForAll(ClientToServerRoundMessages.RESPONSE, true, onPlayerResponse),
+        ]);
+
+        this.sendToAll(BroadcastRoundMessages.PROMPT_COMPLETE);
     }
 }

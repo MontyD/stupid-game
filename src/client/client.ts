@@ -11,7 +11,7 @@ import {
     ClientToServerRoundMessages,
     SingleClientRoundMessages
 } from "../models/messages/round";
-import { Prompt, PromptType } from "../models/entities/prompt";
+import { Prompt } from "../models/entities/prompt";
 
 export type RequestCommands = TopLevelServerToSingleClientMessages |
                                 BroadcastGameMessages |
@@ -19,8 +19,12 @@ export type RequestCommands = TopLevelServerToSingleClientMessages |
                                 BroadcastRoundMessages |
                                 SingleClientRoundMessages;
 
-type PlayerHandler = (player: PlayerDTO) => void;
-type GameDefinitionHandler = (gameDefinition: GameDefinitionDTO) => void;
+export enum ClientEvent {
+    PLAYER_JOINED,
+    PLAYER_LEFT,
+    GAME_STARTED,
+    PLAYER_RESPONSE,
+}
 
 export class Client {
 
@@ -37,9 +41,7 @@ export class Client {
     public player?: PlayerDTO;
     public otherPlayers: PlayerDTO[] = [];
 
-    private playerJoinedHandlers: PlayerHandler[] = [];
-    private playerLeftHandlers: PlayerHandler[] = [];
-    private startGameHandlers: GameDefinitionHandler[] = [];
+    private eventHandlers: Map<ClientEvent, Array<(arg: ObjectOfAny) => void>> = new Map();
 
     private constructor(private socket: SocketIOClient.Socket) { }
 
@@ -59,16 +61,17 @@ export class Client {
         return response as Prompt;
     }
 
-    public onPlayerJoined(handler: PlayerHandler) {
-        this.playerJoinedHandlers.push(handler);
+    public on(event: ClientEvent, handler: (arg: ObjectOfAny) => void) {
+        const handlers = this.eventHandlers.get(event) || [];
+        handlers.push(handler);
+        this.eventHandlers.set(event, handlers);
     }
 
-    public onPlayerLeft(handler: PlayerHandler) {
-        this.playerLeftHandlers.push(handler);
-    }
-
-    public onGameStarted(handler: GameDefinitionHandler) {
-        this.startGameHandlers.push(handler);
+    public off(event: ClientEvent, handler: (arg: ObjectOfAny) => void) {
+        const handlers = (this.eventHandlers.get(event) || []).filter(
+            existingHandler => existingHandler !== handler
+        );
+        this.eventHandlers.set(event, handlers);
     }
 
     public dispose(): void {
@@ -101,12 +104,12 @@ export class Client {
     private handlePlayerJoined({ game, player }: { game: GameDTO, player: PlayerDTO }): void {
         this.game = game;
         this.otherPlayers.push(player);
-        this.playerJoinedHandlers.forEach(handler => handler(player));
+        (this.eventHandlers.get(ClientEvent.PLAYER_JOINED) || []).forEach(handler => handler(player));
     }
 
     private handlePlayerLeft({ player: gonePlayer }: { player: PlayerDTO}): void {
         this.otherPlayers = this.otherPlayers.filter(existingPlayer => existingPlayer.id !== gonePlayer.id);
-        this.playerLeftHandlers.forEach(handler => handler(gonePlayer));
+        (this.eventHandlers.get(ClientEvent.PLAYER_LEFT) || []).forEach(handler => handler(gonePlayer));
     }
 
     private handleGameStarted({ gameDefinition }: { gameDefinition: GameDefinitionDTO }): void {
@@ -115,7 +118,11 @@ export class Client {
         }
         this.game.runState = GameRunState.RUNNING_ROUND;
         this.gameDefinition = gameDefinition;
-        this.startGameHandlers.forEach(handler => handler(gameDefinition));
+        (this.eventHandlers.get(ClientEvent.GAME_STARTED) || []).forEach(handler => handler(gameDefinition));
+    }
+
+    private handlePlayerResponse(res: { playerId: string, response: ObjectOfAny }): void {
+        (this.eventHandlers.get(ClientEvent.PLAYER_RESPONSE) || []).forEach(handler => handler(res));
     }
 
     private async takeNext(command: RequestCommands): Promise<ObjectOfAny> {
@@ -145,6 +152,7 @@ export class Client {
         this.socket.on(BroadcastGameMessages.PLAYER_JOINED, this.handlePlayerJoined.bind(this));
         this.socket.on(BroadcastGameMessages.PLAYER_DISCONNECTED, this.handlePlayerLeft.bind(this));
         this.socket.on(BroadcastGameMessages.STARTED, this.handleGameStarted.bind(this));
+        this.socket.on(BroadcastRoundMessages.PLAYER_RESPONSE, this.handlePlayerResponse.bind(this));
     }
 
 }
