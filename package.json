@@ -21,6 +21,7 @@
   "author": "monty dawson <hello@montydawson.co.uk>",
   "license": "MIT",
   "devDependencies": {
+    "@types/file-type": "^10.6.0",
     "@types/jest": "^23.3.11",
     "@types/mongodb": "^3.1.18",
     "@types/mongoose": "5.0.0",
@@ -37,6 +38,7 @@
   },
   "dependencies": {
     "esm": "^3.0.84",
+    "file-type": "^10.7.1",
     "mongodb": "^3.1.10",
     "mongoose": "5.0.0",
     "pino": "^5.10.6",

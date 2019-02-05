@@ -13,10 +13,11 @@ export const getRoundControllerFor = (
     round: Round,
     server: Server,
     players: PlayerType[],
-    game: GameType
+    game: GameType,
+    roundIndex: number
 ): RoundController => {
     if (round.type === TypeOfQuestion.DRAW) {
-        return new DrawRoundController(round, server, players, game);
+        return new DrawRoundController(round, server, players, game, roundIndex);
     }
     throw new ValidationError(`Unsupported round type ${round.type}`);
 };

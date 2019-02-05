@@ -19,7 +19,8 @@ export abstract class RoundController {
         protected round: Round,
         protected server: Server,
         protected players: PlayerType[],
-        protected game: GameType
+        protected game: GameType,
+        protected readonly roundIndex: number
     ) {
         this.start = this.handleRoundError(this.start);
 
@@ -68,29 +69,32 @@ export abstract class RoundController {
     protected async waitForAll(
         messageType: ClientToServerRoundMessages,
         ignoreHost: boolean = false,
-        singleResponseListener?: (playerId: string) => void,
+        singleResponseListener?: (playerId: string, args: ObjectOfAny) => void,
         timeout?: number
-    ): Promise<Map<string, ObjectOfAny>> {
-        return new Promise<Map<string, ObjectOfAny>>((resolve, reject) => {
+    ): Promise<Map<string, ObjectOfAny> | null> {
+        return new Promise<Map<string, ObjectOfAny> | null>((resolve, reject) => {
             const responses: Map<string, ObjectOfAny> = new Map();
+            let responseCount = 0;
             this.unsubscribers.push(reject);
 
             const attachHandler = (playerId: string, socket: Socket) => {
                 socket.once(messageType, (args: ObjectOfAny) => {
                     const amountOfResponses = ignoreHost ? this.game.numberOfActivePlayers : this.players.length;
-                    responses.set(playerId, args);
+                    responseCount++;
                     if (singleResponseListener) {
-                        singleResponseListener(playerId);
+                        singleResponseListener(playerId, args);
+                    } else {
+                        responses.set(playerId, args);
                     }
-                    if (responses.size === amountOfResponses) {
+                    if (responseCount === amountOfResponses) {
                         this.clearCurrentTimeout();
-                        resolve(responses);
+                        resolve(singleResponseListener ? responses : null);
                     }
                 });
             };
 
             if (timeout) {
-                this.setCurrentTimeout(() => resolve(responses), timeout);
+                this.setCurrentTimeout(() => resolve(singleResponseListener ? responses : null), timeout);
             }
             Array.from(this.sockets.entries()).forEach(([playerId, socket]) => attachHandler(playerId, socket));
         });
@@ -101,15 +105,19 @@ export abstract class RoundController {
             try {
                 await handler.apply(this);
             } catch (error) {
-                logger.error(
-                    'Exception in round controller on game ${this.game.id}',
-                    this.game.id,
-                    error && error.toString(),
-                    error && error.stack
-                );
-                this.server.to(this.game.id).emit(TopLevelServerToSingleClientMessages.ERROR, 'Unhandled round error');
+                this.emitError(error);
             }
         };
+    }
+
+    protected emitError(error: Error) {
+        logger.error(
+            `Exception in round controller on game ${this.game.id}`,
+            this.game.id,
+            error && error.toString(),
+            error && error.stack
+        );
+        this.server.to(this.game.id).emit(TopLevelServerToSingleClientMessages.ERROR, 'Unhandled round error');
     }
 
     protected setCurrentTimeout(callback: (...args: any[]) => void, timeout: number) {

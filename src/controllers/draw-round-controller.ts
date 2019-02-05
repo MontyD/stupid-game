@@ -7,6 +7,7 @@ import {
 } from "../models/messages/round";
 import { Prompt, PromptType } from "../models/entities/prompt";
 import { ObjectOfAny } from "../utils/types";
+import { Image } from "../models/entities/image";
 
 export class DrawRoundController extends RoundController {
 
@@ -36,20 +37,30 @@ export class DrawRoundController extends RoundController {
             ));
         });
 
-        const onPlayerResponse = (playerId: string) => {
-            logger.info(`Got response for ${playerId}`);
-            this.sendToAll(BroadcastRoundMessages.PLAYER_RESPONSE, { playerId });
+        const onPlayerResponse = async (playerId: string, args: ObjectOfAny) => {
+            logger.info(`Got image response for ${playerId}`);
+            const player = this.players.find(p => p.id === playerId);
+            if (!player) {
+                return;
+            }
+
+            try {
+                await Image.createAndSave(args.data, player._id, this.game._id, this.roundIndex);
+                this.sendToAll(BroadcastRoundMessages.PLAYER_RESPONSE, { playerId });
+            } catch (err) {
+                this.emitError(err);
+            }
         };
 
         const timeout = this.DRAW_TIME_MS + this.ALLOWED_LATENCY_MS;
-        const responses = await this.waitForAll(ClientToServerRoundMessages.RESPONSE, true, onPlayerResponse, timeout);
+        await this.waitForAll(ClientToServerRoundMessages.RESPONSE, true, onPlayerResponse, timeout);
 
         this.sendToAll(BroadcastRoundMessages.PROMPT_COMPLETE);
-        this.handleRoundError(() => this.doHandleGuesses(responses));
+        this.handleRoundError(() => this.doHandleGuesses());
     }
 
-    private async doHandleGuesses(prompts: Map<string, ObjectOfAny>) {
+    private async doHandleGuesses() {
         // TODO
-        logger.log(prompts);
+        logger.log('hi');
     }
 }

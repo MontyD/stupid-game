@@ -56,7 +56,7 @@ export const startGame = async (server: Server, socket: Socket, gameId: string) 
     const players = await Player.findAllByGame(game);
 
     await game.start(gameDefinition);
-    const roundController = getRoundControllerFor(gameDefinition.rounds[0], server, players, game);
+    const roundController = getRoundControllerFor(gameDefinition.rounds[0], server, players, game, 0);
     server.to(gameId).emit(BroadcastGameMessages.STARTED, { gameDefinition });
 
     await pause(500);
