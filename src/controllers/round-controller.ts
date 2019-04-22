@@ -74,32 +74,35 @@ export abstract class RoundController {
     protected async waitForAll(
         messageType: ClientToServerRoundMessages,
         ignoreHost: boolean = false,
-        singleResponseListener?: (playerId: string, args: ObjectOfAny) => void,
+        singleResponseListener?: (playerId: string, args: ObjectOfAny, rejectResponse: () => void) => void,
         timeout?: number
-    ): Promise<Map<string, ObjectOfAny> | null> {
-        return new Promise<Map<string, ObjectOfAny> | null>((resolve, reject) => {
+    ): Promise<Map<string, ObjectOfAny>> {
+        return new Promise<Map<string, ObjectOfAny>>((resolve, reject) => {
             const responses: Map<string, ObjectOfAny> = new Map();
             let responseCount = 0;
             this.unsubscribers.push(reject);
 
             const attachHandler = (playerId: string, socket: Socket) => {
                 socket.once(messageType, (args: ObjectOfAny) => {
-                    const amountOfResponses = ignoreHost ? this.game.numberOfActivePlayers : this.players.length;
+                    const expectedNoOfResponses = ignoreHost ? this.game.numberOfActivePlayers : this.players.length;
                     responseCount++;
                     if (singleResponseListener) {
-                        singleResponseListener(playerId, args);
+                        singleResponseListener(playerId, args, () => {
+                            responseCount--;
+                            attachHandler(playerId, socket);
+                        });
                     } else {
                         responses.set(playerId, args);
                     }
-                    if (responseCount === amountOfResponses) {
+                    if (responseCount === expectedNoOfResponses) {
                         this.clearCurrentTimeout();
-                        resolve(singleResponseListener ? responses : null);
+                        resolve(responses);
                     }
                 });
             };
 
             if (timeout) {
-                this.setCurrentTimeout(() => resolve(singleResponseListener ? responses : null), timeout);
+                this.setCurrentTimeout(() => resolve(responses), timeout);
             }
             Array.from(this.sockets.entries()).forEach(([playerId, socket]) => attachHandler(playerId, socket));
         });

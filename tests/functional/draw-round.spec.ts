@@ -83,17 +83,35 @@ describe('draw round', () => {
             return client.sendImageResponse(image);
         }));
 
-        await Promise.all(activePlayerClients.map(async (client) => {
-            return client.waitForNextPrompt();
-        }));
-
+        await Promise.all(activePlayerClients.map(client => client.waitForNextPrompt()));
     });
 
-    it('will reject incorrect data being sent as drawings', async () => {
+    fit('will reject bad data being sent as drawings', async () => {
+        const [firstPlayerClient, ...otherPlayerClients] = activePlayerClients;
+        const sevenZipFile = await asyncReadFile('./tests/functional/assets/draw-images/invalid-file.7z');
         await progressToPrompts();
 
-        // TODO - actually test this
+        const assertImageDataRejected = async (
+            fileContent: ArrayBuffer | string, rejectMessage: string
+        ): Promise<boolean> => {
+            try {
+                await firstPlayerClient.sendImageResponse(fileContent as ArrayBuffer);
+                return false;
+            } catch (err) {
+                expect(err!.message).toEqual(rejectMessage);
+            }
+            return true;
+        };
 
+        expect(await assertImageDataRejected('this-is-a-dodgy-string', 'Image data must be a buffer')).toBeTruthy();
+        expect(await assertImageDataRejected(sevenZipFile, 'Data must be a valid image')).toBeTruthy();
+
+        await Promise.all([firstPlayerClient, ...otherPlayerClients].map(async (client, index) => {
+            const image = await asyncReadFile(`./tests/functional/assets/draw-images/${index}.png`);
+            await client.sendImageResponse(image);
+        }));
+
+        await Promise.all(activePlayerClients.map(client => client.waitForNextPrompt()));
     });
 
 });

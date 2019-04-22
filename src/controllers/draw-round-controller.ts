@@ -11,6 +11,7 @@ import { Image } from "../models/entities/image";
 import { Round } from "../models/entities/game-definition";
 import { PlayerType } from "../models/entities/player";
 import { GameType } from "../models/entities/game";
+import { pause } from "../utils/async";
 
 export class DrawRoundController extends RoundController {
 
@@ -48,7 +49,7 @@ export class DrawRoundController extends RoundController {
             ));
         });
 
-        const onPlayerResponse = async (playerId: string, args: ObjectOfAny) => {
+        const onPlayerResponse = async (playerId: string, args: ObjectOfAny, rejectResponse: () => void) => {
             logger.info(`Got draw image response for ${playerId}`);
             const player = this.players.find(p => p.id === playerId);
             if (!player) {
@@ -61,12 +62,13 @@ export class DrawRoundController extends RoundController {
                 this.sendToAll(BroadcastRoundMessages.PLAYER_RESPONSE, { playerId });
             } catch (err) {
                 this.emitError(err, playerId);
+                rejectResponse();
             }
         };
 
         const timeout = this.DRAW_TIME_MS + this.ALLOWED_LATENCY_MS;
         await this.waitForAll(ClientToServerRoundMessages.RESPONSE, true, onPlayerResponse, timeout);
-
+        await pause(500);
         this.sendToAll(BroadcastRoundMessages.PROMPT_COMPLETE);
         this.doHandleGuesses();
     }

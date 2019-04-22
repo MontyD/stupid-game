@@ -63,11 +63,12 @@ export class Client {
 
     public async sendImageResponse(data: ArrayBuffer) {
         this.socket.emit(ClientToServerRoundMessages.RESPONSE, { data });
-        this.takeNext(SingleClientRoundMessages.RESPONSE_RECEIVED);
+        await this.takeNext(SingleClientRoundMessages.RESPONSE_RECEIVED);
     }
 
     public async waitForNextPrompt() {
-        this.takeNext(BroadcastRoundMessages.PROMPT_COMPLETE);
+        await this.takeNext(BroadcastRoundMessages.PROMPT_COMPLETE);
+        console.log('progressed past take next', this.player!.id);
         this.socket.emit(ClientToServerRoundMessages.READY_TO_TAKE_PROMPT);
     }
 
