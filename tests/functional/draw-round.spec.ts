@@ -1,7 +1,11 @@
 import 'jest';
+import { readFile } from 'fs';
+import { promisify } from 'util';
 import { createClientSocket } from './util/create-connection';
 import { Client } from '../../src/client/client';
 import { pause } from '../../src/utils/async';
+
+const asyncReadFile = promisify(readFile);
 
 describe('draw round', () => {
 
@@ -71,8 +75,14 @@ describe('draw round', () => {
         });
     });
 
-    it('will allow continue the round after prompts are completed', async () => {
+    it('will continue the round after prompts are completed', async () => {
         await progressToPrompts();
+
+        const imageResponses = await Promise.all(activePlayerClients.map(async (client, index) => {
+            const image = await asyncReadFile(`./tests/functional/assets/draw-images/${index}.png`);
+            return client.sendImageResponse(image);
+        }));
+
     });
 
 });
