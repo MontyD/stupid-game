@@ -2,10 +2,11 @@ import { Round } from "../models/entities/game-definition";
 import { Server, Socket } from "socket.io";
 import { ObjectOfAny } from "../utils/types";
 import { PlayerType } from "../models/entities/player";
-import { ClientToServerRoundMessages } from "../models/messages/round";
+import { ClientToServerRoundMessages, SingleClientRoundMessages } from "../models/messages/round";
 import { GameType } from "../models/entities/game";
 import { logger } from "../logger";
 import { TopLevelServerToSingleClientMessages } from "../models/messages/top-level";
+import { emitSocketError } from "../router";
 
 export abstract class RoundController {
     protected readonly sockets: Map<string, Socket> = new Map();
@@ -57,10 +58,14 @@ export abstract class RoundController {
         return this.players.filter(player => !player.isHost);
     }
 
-    protected sendToPlayer(player: PlayerType, message: string, args: ObjectOfAny): boolean {
+    protected sendToPlayer(
+        player: PlayerType,
+        messageType: SingleClientRoundMessages,
+        args: ObjectOfAny = {}
+    ): boolean {
         const socket = this.sockets.get(player.id);
         if (socket) {
-            socket.emit(message, args);
+            socket.emit(messageType, args);
             return true;
         }
         return false;
@@ -110,7 +115,14 @@ export abstract class RoundController {
         };
     }
 
-    protected emitError(error: Error) {
+    protected emitError(error: Error, playerId?: string) {
+        if (playerId) {
+            const socket = this.sockets.get(playerId);
+            if (socket) {
+                emitSocketError(socket, error);
+                return;
+            }
+        }
         logger.error(
             `Exception in round controller on game ${this.game.id}`,
             this.game.id,

@@ -46,9 +46,10 @@ export class DrawRoundController extends RoundController {
 
             try {
                 await Image.createAndSave(args.data, player._id, this.game._id, this.roundIndex);
+                this.sendToPlayer(player, SingleClientRoundMessages.RESPONSE_RECEIVED);
                 this.sendToAll(BroadcastRoundMessages.PLAYER_RESPONSE, { playerId });
             } catch (err) {
-                this.emitError(err);
+                this.emitError(err, playerId);
             }
         };
 

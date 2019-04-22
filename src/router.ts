@@ -2,7 +2,7 @@ import { Socket, Server } from 'socket.io';
 import { logger } from './logger';
 import { createGame, joinGame, disconnectPlayer } from './controllers/game-controller';
 import { TopLevelClientToServerMessages, TopLevelServerToSingleClientMessages } from './models/messages/top-level';
-import { validationErrorName } from './controllers/validation-error';
+import { validationErrorName, ValidationError } from './controllers/validation-error';
 
 type SocketHandler = (...args: any[]) => void;
 
@@ -25,17 +25,21 @@ export const handleError = (socket: Socket, handler: SocketHandler): SocketHandl
         try {
             await handler(...args);
         } catch (error) {
-            if (error && error.name === validationErrorName) {
-                 socket.emit(TopLevelServerToSingleClientMessages.VALIDATION_ERROR, error.message);
-                 return;
-            }
-            logger.error(
-                'Unhandled error in socket handler',
-                socket.id,
-                error && error.toString(),
-                error && error.stack
-            );
-            socket.emit(TopLevelServerToSingleClientMessages.ERROR, 'Unhandled socket error');
+            emitSocketError(socket, error);
         }
     };
+};
+
+export const emitSocketError = (socket: Socket, error: Error) => {
+    if (ValidationError.isValidationError(error)) {
+        socket.emit(TopLevelServerToSingleClientMessages.VALIDATION_ERROR, error.message);
+        return;
+    }
+    logger.error(
+        'Unhandled error in socket handler',
+        socket.id,
+        error && (error as Error).toString(),
+        error && (error as Error).stack
+    );
+    socket.emit(TopLevelServerToSingleClientMessages.ERROR, 'Unhandled socket error');
 };

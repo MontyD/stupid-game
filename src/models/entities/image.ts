@@ -10,11 +10,18 @@ export class ImageEntity extends Typegoose {
     @staticMethod
     public static async createAndSave(
         this: ModelType<ImageEntity> & typeof ImageEntity,
-        data: Buffer,
+        data: unknown,
         player: ObjectId,
         game: ObjectId,
         roundIndex: number
     ): Promise<ImageType> {
+        if (!Buffer.isBuffer(data)) {
+            throw new ValidationError('Image data must be a buffer');
+        }
+        if (data.byteLength > 2000000) {
+            throw new ValidationError('Image data is too large');
+        }
+
         const typeOfFile = fileType(data);
         if (!typeOfFile || typeOfFile.mime !== 'image/png') {
             throw new ValidationError('Data must be a valid image');

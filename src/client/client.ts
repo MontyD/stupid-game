@@ -61,6 +61,11 @@ export class Client {
         return response as Prompt;
     }
 
+    public async sendImageResponse(data: ArrayBuffer) {
+        this.socket.emit(ClientToServerRoundMessages.RESPONSE, { data });
+        this.takeNext(SingleClientRoundMessages.RESPONSE_RECEIVED);
+    }
+
     public on(event: ClientEvent, handler: (arg: ObjectOfAny) => void) {
         const handlers = this.eventHandlers.get(event) || [];
         handlers.push(handler);

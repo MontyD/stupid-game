@@ -6,6 +6,7 @@ export enum BroadcastRoundMessages {
 
 export enum SingleClientRoundMessages {
     PROMPT = 'PROMPT',
+    RESPONSE_RECEIVED = 'RESPONSE_RECEIVED',
 }
 
 export enum ClientToServerRoundMessages {
