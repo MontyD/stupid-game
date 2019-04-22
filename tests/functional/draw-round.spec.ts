@@ -75,13 +75,24 @@ describe('draw round', () => {
         });
     });
 
-    it('will continue the round after prompts are completed', async () => {
+    it('will continue the round after image prompts are completed', async () => {
         await progressToPrompts();
 
-        const imageResponses = await Promise.all(activePlayerClients.map(async (client, index) => {
+        await Promise.all(activePlayerClients.map(async (client, index) => {
             const image = await asyncReadFile(`./tests/functional/assets/draw-images/${index}.png`);
             return client.sendImageResponse(image);
         }));
+
+        await Promise.all(activePlayerClients.map(async (client) => {
+            return client.waitForNextPrompt();
+        }));
+
+    });
+
+    it('will reject incorrect data being sent as drawings', async () => {
+        await progressToPrompts();
+
+        // TODO - actually test this
 
     });
 

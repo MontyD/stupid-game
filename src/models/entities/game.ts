@@ -32,7 +32,7 @@ export const validateGameCode = (code: string) => Boolean(code && code.length ==
 export class GameEntity extends Typegoose {
 
     @staticMethod
-    public static async findByCode(
+    public static async getByCode(
         this: ModelType<GameEntity> & typeof GameEntity,
         code: string = ''
     ): Promise<GameType> {

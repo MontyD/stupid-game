@@ -35,7 +35,7 @@ export const joinGame = async (socket: Socket, server: Server, jointArgs: JoinGa
     const { gameCode, playerName }: JoinGameOptions = jointArgs;
     logger.info('joining game', gameCode, playerName, socket.id);
 
-    const game = await Game.findByCode(gameCode);
+    const game = await Game.getByCode(gameCode);
     const player = await Player.generatePlayer(game, playerName, socket.id);
     const otherPlayers = await Player.findAllByGame(game);
 

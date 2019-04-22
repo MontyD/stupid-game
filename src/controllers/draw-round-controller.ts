@@ -23,8 +23,8 @@ export class DrawRoundController extends RoundController {
 
         this.doDrawPrompts = this.handleRoundError(this.doDrawPrompts);
         this.doHandleGuesses = this.handleRoundError(this.doHandleGuesses);
+        this.doHandleRoundComplete = this.handleRoundError(this.doHandleRoundComplete);
     }
-
 
     public async start() {
         logger.info(`starting draw round controller for game ${this.game.id}`);
@@ -43,13 +43,13 @@ export class DrawRoundController extends RoundController {
             this.playerIdToQuestionIndex.set(player.id, index);
             this.sendToPlayer(player, SingleClientRoundMessages.PROMPT, new Prompt(
                 PromptType.DRAW,
-                this.round.questions[index].text,
-                this.DRAW_TIME_MS
+                this.DRAW_TIME_MS,
+                this.round.questions[index].text
             ));
         });
 
         const onPlayerResponse = async (playerId: string, args: ObjectOfAny) => {
-            logger.info(`Got image response for ${playerId}`);
+            logger.info(`Got draw image response for ${playerId}`);
             const player = this.players.find(p => p.id === playerId);
             if (!player) {
                 return;
@@ -72,7 +72,24 @@ export class DrawRoundController extends RoundController {
     }
 
     private async doHandleGuesses() {
-        // TODO
-        logger.log('hi');
+        await this.waitForAll(ClientToServerRoundMessages.READY_TO_TAKE_PROMPT);
+        const currentImage = await Image.getByGameAndRoundIndex(this.game, this.roundIndex);
+
+        if (!currentImage) {
+            this.doHandleRoundComplete();
+            return;
+        }
+
+        this.sendToAll(SingleClientRoundMessages.PROMPT, new Prompt(
+            PromptType.DRAW,
+            this.DRAW_TIME_MS,
+            undefined,
+            currentImage.data.buffer
+        ));
+
+    }
+
+    private async doHandleRoundComplete() {
+        logger.log('todo - handle round complete');
     }
 }

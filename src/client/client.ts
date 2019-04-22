@@ -66,6 +66,11 @@ export class Client {
         this.takeNext(SingleClientRoundMessages.RESPONSE_RECEIVED);
     }
 
+    public async waitForNextPrompt() {
+        this.takeNext(BroadcastRoundMessages.PROMPT_COMPLETE);
+        this.socket.emit(ClientToServerRoundMessages.READY_TO_TAKE_PROMPT);
+    }
+
     public on(event: ClientEvent, handler: (arg: ObjectOfAny) => void) {
         const handlers = this.eventHandlers.get(event) || [];
         handlers.push(handler);

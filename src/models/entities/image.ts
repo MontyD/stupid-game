@@ -1,5 +1,5 @@
 import { prop, InstanceType, Typegoose, staticMethod, ModelType } from 'typegoose';
-import { GameEntity } from './game';
+import { GameEntity, GameType } from './game';
 import { ObjectId, Binary } from 'mongodb';
 import { PlayerEntity } from './player';
 import * as fileType from 'file-type';
@@ -30,6 +30,19 @@ export class ImageEntity extends Typegoose {
         return (new Image({ data, player, game, roundIndex })).save();
     }
 
+    @staticMethod
+    public static async getByGameAndRoundIndex(
+        this: ModelType<ImageEntity> & typeof ImageEntity,
+        game: GameType,
+        roundIndex: number
+    ): Promise<ImageType|null> {
+         const image = await this.findOne({ game: game._id, active: true, roundIndex });
+         if (!image) {
+             return null;
+         }
+         return image;
+    }
+
     @prop({ ref: PlayerEntity, required: true })
     public player!: ObjectId;
 
@@ -41,6 +54,9 @@ export class ImageEntity extends Typegoose {
 
     @prop({ required: true })
     public data!: Binary;
+
+    @prop({ required: true, default: true })
+    public active!: boolean;
 
 }
 
